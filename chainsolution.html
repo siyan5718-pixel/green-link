@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绿链汇 · 链方案 · 大气版</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: #0b2a21; color: #e7f3ef; line-height: 1.5; scroll-behavior: smooth; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 48px; }
+        .navbar { background: rgba(8, 30, 24, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(200, 220, 210, 0.15); padding: 24px 0; position: sticky; top: 0; z-index: 100; }
+        .navbar .container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+        .logo { font-size: 2.4rem; font-weight: 700; letter-spacing: -0.02em; background: linear-gradient(135deg, #d4e9e0, #a2d9c5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+        .nav-links { display: flex; gap: 56px; }
+        .nav-links a { text-decoration: none; color: #d0e2da; font-weight: 500; font-size: 1.2rem; transition: color 0.2s; border-bottom: 2px solid transparent; padding-bottom: 6px; }
+        .nav-links a:hover { color: #f3e9c0; border-bottom-color: #c9a84b; }
+        .nav-links a.active { color: #f3e9c0; border-bottom-color: #c9a84b; font-weight: 600; }
+        .btn { display: inline-block; background: linear-gradient(145deg, #bfa248, #a38734); color: #0b2a21; padding: 14px 42px; border-radius: 60px; font-weight: 600; font-size: 1.1rem; letter-spacing: 0.02em; text-decoration: none; transition: all 0.3s; box-shadow: 0 20px 30px -12px #000; border: 1px solid rgba(255,215,120,0.3); }
+        .btn:hover { background: linear-gradient(145deg, #dbb85c, #b69640); transform: scale(1.02); box-shadow: 0 28px 38px -12px #00000066; }
+        .btn-outline { background: transparent; color: #e7f3ef; border: 2px solid #c9a84b; box-shadow: none; }
+        .btn-outline:hover { background: #c9a84b; color: #0b2a21; border-color: #c9a84b; }
+        section { padding: 120px 0; }
+        .section-title { font-size: 4rem; font-weight: 700; line-height: 1.1; margin-bottom: 24px; color: #f0f7f3; letter-spacing: -0.02em; max-width: 900px; }
+        .section-title span { color: #c9a84b; border-bottom: 4px solid #c9a84b; padding-bottom: 8px; }
+        .section-subtitle { font-size: 1.4rem; color: #aac2b8; max-width: 800px; margin-bottom: 72px; font-weight: 400; line-height: 1.6; }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; margin-top: 40px; }
+        .card { background: rgba(20, 50, 40, 0.65); backdrop-filter: blur(12px); border: 1px solid rgba(201, 168, 75, 0.25); border-radius: 48px; padding: 48px 40px; transition: all 0.3s; box-shadow: 0 30px 40px -30px #000; }
+        .card:hover { border-color: #c9a84b; background: rgba(20, 55, 42, 0.8); transform: translateY(-8px); box-shadow: 0 40px 50px -20px #000; }
+        .card-icon { background: rgba(201, 168, 75, 0.15); width: 90px; height: 90px; border-radius: 30px; display: flex; align-items: center; justify-content: center; margin-bottom: 36px; color: #eedfa0; font-size: 44px; border: 1px solid #b19747; }
+        .card h3 { font-size: 2.3rem; font-weight: 600; margin-bottom: 20px; color: #f0f3ea; }
+        .card p { color: #bdd3c9; font-size: 1.15rem; line-height: 1.6; }
+        .footer { background-color: #052018; color: #95b7a8; padding: 60px 0; text-align: center; border-top: 1px solid #c9a84b30; }
+        .footer p { font-size: 1.1rem; }
+        .footer a { color: #c9a84b; text-decoration: none; }
+        @media (max-width: 800px) {
+            .container { padding: 0 24px; }
+            .section-title { font-size: 3rem; }
+            .nav-links { gap: 30px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">绿链汇<span style="color:#c9a84b;">.</span></a>
+            <div class="nav-links">
+                <a href="index.html">首 页</a>
+                <a href="greenpower.html">绿动力</a>
+                <a href="chainsolution.html" class="active">链方案</a>
+                <a href="finance.html">汇金融</a>
+                <a href="about.html">关于</a>
+            </div>
+        </div>
+    </nav>
+
+    <section>
+        <div class="container">
+            <h2 class="section-title"><span>链方案</span> · 绿色运力生态建设</h2>
+            <div class="section-subtitle">从车辆到能源，从场景到生态，提供一站式新能源运力定制方案。</div>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon"><i class="fa-regular fa-handshake"></i></div>
+                    <h3>合作资源</h3>
+                    <p>携手多家主流新能源车辆制造商，车型涵盖电动、氢能等，快速匹配干线、短驳、倒短等场景。</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-truck-fast"></i></div>
+                    <h3>核心服务</h3>
+                    <p>提供电动货车、氢燃料电池车等定制化运力升级方案，覆盖全国主要物流通道。</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-charging-station"></i></div>
+                    <h3>配套保障</h3>
+                    <p>配套建设充电桩/换氢站并提供专业维护，实现“车+站+运”高效闭环。</p>
+                </div>
+            </div>
+            <div style="background: rgba(20, 55, 42, 0.7); backdrop-filter: blur(8px); border-radius: 60px; padding: 48px; margin-top: 64px; border: 1px solid #c9a84b40; text-align: center;">
+                <p style="font-size: 2rem; color: #eedfa0;">已完成全生态赋能体系搭建</p>
+                <p style="font-size: 1.3rem; color: #bdd3c9; margin-top: 16px;">示范线路：青岛-德州 · 武汉-重庆 · 京沪氢能走廊</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© 2025 上海绿链汇数字科技有限公司 · All rights reserved</p>
+            <p style="margin-top: 16px;">沪ICP备2025GH001 | 绿色运力先锋</p>
+            <p style="margin-top: 24px;"><a href="chainsolution.html">返回顶部</a></p>
+        </div>
+    </footer>
+</body>
+</html>

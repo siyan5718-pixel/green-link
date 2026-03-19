@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绿链汇 · 关于我们 · 大气版</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: #0b2a21; color: #e7f3ef; line-height: 1.5; scroll-behavior: smooth; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 48px; }
+        .navbar { background: rgba(8, 30, 24, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(200, 220, 210, 0.15); padding: 24px 0; position: sticky; top: 0; z-index: 100; }
+        .navbar .container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+        .logo { font-size: 2.4rem; font-weight: 700; letter-spacing: -0.02em; background: linear-gradient(135deg, #d4e9e0, #a2d9c5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+        .nav-links { display: flex; gap: 56px; }
+        .nav-links a { text-decoration: none; color: #d0e2da; font-weight: 500; font-size: 1.2rem; transition: color 0.2s; border-bottom: 2px solid transparent; padding-bottom: 6px; }
+        .nav-links a:hover { color: #f3e9c0; border-bottom-color: #c9a84b; }
+        .nav-links a.active { color: #f3e9c0; border-bottom-color: #c9a84b; font-weight: 600; }
+        .btn { display: inline-block; background: linear-gradient(145deg, #bfa248, #a38734); color: #0b2a21; padding: 14px 42px; border-radius: 60px; font-weight: 600; font-size: 1.1rem; letter-spacing: 0.02em; text-decoration: none; transition: all 0.3s; box-shadow: 0 20px 30px -12px #000; border: 1px solid rgba(255,215,120,0.3); }
+        .btn:hover { background: linear-gradient(145deg, #dbb85c, #b69640); transform: scale(1.02); box-shadow: 0 28px 38px -12px #00000066; }
+        .btn-outline { background: transparent; color: #e7f3ef; border: 2px solid #c9a84b; box-shadow: none; }
+        .btn-outline:hover { background: #c9a84b; color: #0b2a21; border-color: #c9a84b; }
+        section { padding: 120px 0; }
+        .section-title { font-size: 4rem; font-weight: 700; line-height: 1.1; margin-bottom: 24px; color: #f0f7f3; letter-spacing: -0.02em; max-width: 900px; }
+        .section-title span { color: #c9a84b; border-bottom: 4px solid #c9a84b; padding-bottom: 8px; }
+        .section-subtitle { font-size: 1.4rem; color: #aac2b8; max-width: 800px; margin-bottom: 72px; font-weight: 400; line-height: 1.6; }
+        .about-wrapper { display: flex; gap: 60px; flex-wrap: wrap; }
+        .case-showcase { flex: 2 1 500px; background: rgba(20, 50, 40, 0.6); backdrop-filter: blur(10px); border-radius: 60px; padding: 60px 50px; border: 1px solid #c9a84b30; }
+        .case-showcase h3 { font-size: 2.8rem; margin-bottom: 40px; color: #f0f3ea; }
+        .case-item { background: rgba(0,0,0,0.2); border-radius: 40px; padding: 36px; margin-bottom: 30px; border-left: 8px solid #c9a84b; }
+        .case-item h4 { font-size: 2rem; color: #e7dbaa; }
+        .case-item p { font-size: 1.1rem; color: #bdd3c9; margin-bottom: 6px; }
+        .contact-info { flex: 1 1 350px; background: #0f3d30; border-radius: 60px; padding: 60px 40px; border: 1px solid #c9a84b40; }
+        .contact-info h3 { font-size: 2.6rem; color: white; margin-bottom: 48px; }
+        .contact-detail { display: flex; align-items: center; gap: 24px; margin-bottom: 40px; }
+        .contact-detail i { width: 70px; height: 70px; background: #1c543f; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #eedfa0; border: 1px solid #b19747; }
+        .contact-detail div p:first-child { font-weight: 600; font-size: 1.3rem; margin-bottom: 6px; }
+        .map-placeholder { background: #1b4f3d; border-radius: 40px; height: 180px; display: flex; align-items: center; justify-content: center; border: 2px dashed #c9a84b; color: #cbd2b0; font-size: 1.2rem; gap: 12px; margin-top: 40px; }
+        .team-mini { display: flex; gap: 24px; margin: 40px 0 20px; flex-wrap: wrap; }
+        .team-mini .avatar { background: #275c48; width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #e7dbaa; font-size: 44px; border: 3px solid #c9a84b; }
+        .metric-tag { background: rgba(201, 168, 75, 0.18); border: 1px solid #c9a84b; color: #eedfa0; border-radius: 60px; padding: 8px 24px; display: inline-block; font-size: 1rem; font-weight: 600; backdrop-filter: blur(4px); }
+        .footer { background-color: #052018; color: #95b7a8; padding: 60px 0; text-align: center; border-top: 1px solid #c9a84b30; }
+        .footer p { font-size: 1.1rem; }
+        .footer a { color: #c9a84b; text-decoration: none; }
+        @media (max-width: 800px) {
+            .container { padding: 0 24px; }
+            .section-title { font-size: 3rem; }
+            .nav-links { gap: 30px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">绿链汇<span style="color:#c9a84b;">.</span></a>
+            <div class="nav-links">
+                <a href="index.html">首 页</a>
+                <a href="greenpower.html">绿动力</a>
+                <a href="chainsolution.html">链方案</a>
+                <a href="finance.html">汇金融</a>
+                <a href="about.html" class="active">关于</a>
+            </div>
+        </div>
+    </nav>
+
+    <section>
+        <div class="container">
+            <h2 class="section-title"><span>关于我们</span> · 创新·合作·担当·共赢</h2>
+            <div class="section-subtitle">绿链汇成立于2020年，2025年战略重组，致力于成为大宗物流新能源运力领导者。</div>
+
+            <div class="about-wrapper">
+                <!-- 案例展示区 -->
+                <div class="case-showcase">
+                    <h3><i class="fa-regular fa-briefcase" style="color:#c9a84b;"></i> 合作案例 (模板可编辑)</h3>
+                    <div class="case-item">
+                        <h4>山西大同某煤矿 · 电能重卡项目</h4>
+                        <p><i class="fa-regular fa-truck"></i> 3辆电能重卡 (尾号08087/06363/03315)</p>
+                        <p><i class="fa-regular fa-route"></i> 内蒙古鄂尔多斯 — 山西朔州，单程170km</p>
+                        <p><i class="fa-regular fa-clock"></i> 每日往返2趟，日行680公里，单车载重33吨</p>
+                        <p><i class="fa-regular fa-chart-line"></i> 成本较燃油降低5%，效率提升15%</p>
+                    </div>
+                    <div class="case-item">
+                        <h4>某国央企绿色运力试点</h4>
+                        <p>10辆氢能重卡投入京沪干线，配套换氢站建设，单站盈利模型验证中。</p>
+                        <span class="metric-tag">示范城市群</span>
+                    </div>
+                    <p style="margin-top: 30px; color:#bdd3c9;"><i class="fa-regular fa-pen-to-square"></i> 更多案例、客户LOGO可在此区域替换</p>
+                </div>
+
+                <!-- 联系方式 + 团队占位 -->
+                <div class="contact-info">
+                    <h3>联系 · 我们</h3>
+                    <div class="contact-detail">
+                        <i class="fa-regular fa-map"></i>
+                        <div>
+                            <p>总部地址 (上海)</p>
+                            <p>浦东新区 xx路 x号 绿链大厦 12F</p>
+                        </div>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fa-regular fa-envelope"></i>
+                        <div>
+                            <p>业务邮箱</p>
+                            <p>contact@greenchainhub.cn</p>
+                        </div>
+                    </div>
+                    <div class="contact-detail">
+                        <i class="fa-regular fa-phone"></i>
+                        <div>
+                            <p>商务热线</p>
+                            <p>021-6888 1234 ｜ 139-0000-1111</p>
+                        </div>
+                    </div>
+                    <div class="map-placeholder">
+                        <i class="fa-regular fa-map"></i> 地图嵌入框 (可替换)
+                    </div>
+
+                    <div style="margin-top: 48px;">
+                        <p style="font-weight: 600; font-size: 1.8rem; margin-bottom: 24px;">核心团队</p>
+                        <div class="team-mini">
+                            <div class="avatar"><i class="fa-regular fa-user"></i></div>
+                            <div class="avatar"><i class="fa-regular fa-user"></i></div>
+                            <div class="avatar"><i class="fa-regular fa-user"></i></div>
+                            <div class="avatar"><i class="fa-regular fa-user"></i></div>
+                        </div>
+                        <p style="color:#aac2b8; margin-top: 16px;">纪红青 · 徐辉 · 林刚 · 李文毅 (联合创始人)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据展示 -->
+            <div style="display: flex; gap: 32px; justify-content: space-between; flex-wrap: wrap; margin-top: 80px; background: rgba(0,0,0,0.25); border-radius: 80px; padding: 60px 50px; border: 1px solid #c9a84b30;">
+                <div><span style="font-weight: 700; font-size: 3.2rem; color: #d7b85c;">30+</span><br>合作车队</div>
+                <div><span style="font-weight: 700; font-size: 3.2rem; color: #d7b85c;">500+</span><br>新能源车辆</div>
+                <div><span style="font-weight: 700; font-size: 3.2rem; color: #d7b85c;">10+</span><br>业务场景</div>
+                <div><span style="font-weight: 700; font-size: 3.2rem; color: #d7b85c;">20+</span><br>国央企/500强</div>
+                <div><span style="font-weight: 700; font-size: 3.2rem; color: #d7b85c;">2000万</span><br>月运费收入</div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© 2025 上海绿链汇数字科技有限公司 · All rights reserved</p>
+            <p style="margin-top: 16px;">沪ICP备2025GH001 | 绿色运力先锋</p>
+            <p style="margin-top: 24px;"><a href="about.html">返回顶部</a></p>
+        </div>
+    </footer>
+</body>
+</html>

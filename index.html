@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绿链汇 · 首页 · 大气版</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: #0b2a21; color: #e7f3ef; line-height: 1.5; scroll-behavior: smooth; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 48px; }
+        .navbar { background: rgba(8, 30, 24, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(200, 220, 210, 0.15); padding: 24px 0; position: sticky; top: 0; z-index: 100; }
+        .navbar .container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+        .logo { font-size: 2.4rem; font-weight: 700; letter-spacing: -0.02em; background: linear-gradient(135deg, #d4e9e0, #a2d9c5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+        .nav-links { display: flex; gap: 56px; }
+        .nav-links a { text-decoration: none; color: #d0e2da; font-weight: 500; font-size: 1.2rem; transition: color 0.2s; border-bottom: 2px solid transparent; padding-bottom: 6px; }
+        .nav-links a:hover { color: #f3e9c0; border-bottom-color: #c9a84b; }
+        .nav-links a.active { color: #f3e9c0; border-bottom-color: #c9a84b; font-weight: 600; }
+        .btn { display: inline-block; background: linear-gradient(145deg, #bfa248, #a38734); color: #0b2a21; padding: 14px 42px; border-radius: 60px; font-weight: 600; font-size: 1.1rem; letter-spacing: 0.02em; text-decoration: none; transition: all 0.3s; box-shadow: 0 20px 30px -12px #000; border: 1px solid rgba(255,215,120,0.3); }
+        .btn:hover { background: linear-gradient(145deg, #dbb85c, #b69640); transform: scale(1.02); box-shadow: 0 28px 38px -12px #00000066; }
+        .btn-outline { background: transparent; color: #e7f3ef; border: 2px solid #c9a84b; box-shadow: none; }
+        .btn-outline:hover { background: #c9a84b; color: #0b2a21; border-color: #c9a84b; }
+        section { padding: 120px 0; }
+        .section-title { font-size: 4rem; font-weight: 700; line-height: 1.1; margin-bottom: 24px; color: #f0f7f3; letter-spacing: -0.02em; max-width: 900px; }
+        .section-title span { color: #c9a84b; border-bottom: 4px solid #c9a84b; padding-bottom: 8px; }
+        .section-subtitle { font-size: 1.4rem; color: #aac2b8; max-width: 800px; margin-bottom: 72px; font-weight: 400; line-height: 1.6; }
+        .hero { padding: 40px 0 120px; background: radial-gradient(ellipse at 70% 30%, #1a4a3a, #0b2a21 70%); }
+        .hero .container { display: flex; align-items: center; gap: 80px; flex-wrap: wrap; }
+        .hero-content { flex: 1 1 500px; }
+        .hero-content h1 { font-size: 5.2rem; font-weight: 800; line-height: 1.05; color: #f5fbf8; margin-bottom: 32px; }
+        .hero-gold { color: #e9d593; text-shadow: 0 0 20px rgba(201,168,75,0.3); }
+        .hero-content p { font-size: 1.4rem; color: #cbdcd2; margin-bottom: 48px; max-width: 620px; }
+        .hero-stats { display: flex; gap: 60px; margin: 60px 0 30px; flex-wrap: wrap; }
+        .stat-item h3 { font-size: 3.2rem; font-weight: 700; color: #d7b85c; }
+        .stat-item p { font-size: 1.1rem; color: #98b7aa; margin: 0; letter-spacing: 0.03em; }
+        .hero-image { flex: 1 1 400px; background: rgba(255,255,255,0.02); border-radius: 40px; height: 500px; backdrop-filter: blur(4px); border: 1px solid rgba(201,168,75,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="%23c9a84b" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>'); background-repeat: no-repeat; background-position: center 40%; background-size: 160px; box-shadow: 0 40px 60px -20px #00000080; }
+        .hero-image span { margin-top: 300px; background: rgba(10, 42, 33, 0.8); padding: 12px 28px; border-radius: 60px; font-size: 1.2rem; border: 1px solid #9f8748; color: #e7dbaa; backdrop-filter: blur(8px); }
+        .footer { background-color: #052018; color: #95b7a8; padding: 60px 0; text-align: center; border-top: 1px solid #c9a84b30; }
+        .footer p { font-size: 1.1rem; }
+        .footer a { color: #c9a84b; text-decoration: none; }
+        @media (max-width: 800px) {
+            .container { padding: 0 24px; }
+            .hero-content h1 { font-size: 3.8rem; }
+            .section-title { font-size: 3rem; }
+            .nav-links { gap: 30px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">绿链汇<span style="color:#c9a84b;">.</span></a>
+            <div class="nav-links">
+                <a href="index.html" class="active">首 页</a>
+                <a href="greenpower.html">绿动力</a>
+                <a href="chainsolution.html">链方案</a>
+                <a href="finance.html">汇金融</a>
+                <a href="about.html">关于</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>大宗物流 <span class="hero-gold">新能源运力</span><br>定义绿色新干线</h1>
+                <p>绿链汇——2025战略重组，以数字化与新能源运力为核心，重构供应链效率与可持续性。</p>
+                <div class="hero-stats">
+                    <div class="stat-item"><h3>30+</h3><p>合作车队</p></div>
+                    <div class="stat-item"><h3>500+</h3><p>新能源车辆</p></div>
+                    <div class="stat-item"><h3>2000万</h3><p>月运费收入</p></div>
+                </div>
+                <a href="greenpower.html" class="btn">探索绿动力 <i class="fa-regular fa-arrow-right" style="margin-left: 10px;"></i></a>
+                <a href="about.html" class="btn btn-outline" style="margin-left: 24px;">联系合作</a>
+            </div>
+            <div class="hero-image">
+                <span>⚡ 氢电 · 智慧网络</span>
+            </div>
+        </div>
+    </section>
+
+    <section style="padding-top:0;">
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 40px;">
+                <div>
+                    <h2 class="section-title" style="font-size:3rem;">高效·绿色·智能</h2>
+                    <p class="section-subtitle">三大业务板块，构建完整新能源运力生态。</p>
+                </div>
+                <a href="greenpower.html" class="btn-outline btn" style="border-radius:60px;">了解更多 <i class="fa-regular fa-circle-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© 2025 上海绿链汇数字科技有限公司 · All rights reserved</p>
+            <p style="margin-top: 16px;">沪ICP备2025GH001 | 绿色运力先锋</p>
+            <p style="margin-top: 24px;"><a href="index.html">返回顶部</a></p>
+        </div>
+    </footer>
+</body>
+</html>
