@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>绿链汇 - 管理后台</title>
-  <!-- 修复：使用微信官方可用的云开发 SDK -->
-  <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
+  <!-- 修复：使用纯CloudBase SDK（无需AppID） -->
+  <script src="https://unpkg.com/@cloudbase/js-sdk@1.10.1/dist/cloudbase.full.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
@@ -78,12 +78,14 @@
     const envId = "cloud1-9gokdyng87192870"; // 示例：xxx-123456
     // ==============================================================================
 
-    // 修复：初始化云开发（适配免费版，跳过登录校验）
-    const cld = cloud.init({ 
+    // 终极修复：初始化纯CloudBase SDK（无需AppID，适配免费版）
+    const cld = cloudbase.init({
       env: envId,
-      credentials: { skipAuth: true } // 免费版必须加，否则调用失败
+      authType: 'anonymous' // 匿名登录，绕开AppID和登录校验
     });
-    const db = cld.database(); // 仅需数据库和云函数调用能力
+    // 执行匿名登录（必须，否则无法调用云函数/数据库）
+    cld.auth({ persistence: 'local' }).anonymousAuthProvider().signIn();
+    const db = cld.database();
 
     // DOM元素获取
     const loginArea = document.getElementById('loginArea');
