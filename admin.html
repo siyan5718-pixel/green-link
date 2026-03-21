@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>绿链汇 - 管理后台</title>
-  <!-- 修复：使用纯CloudBase SDK（无需AppID） -->
-  <script src="https://unpkg.com/@cloudbase/js-sdk@1.10.1/dist/cloudbase.full.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
@@ -30,10 +28,8 @@
     .tab-btn.active { background: #00A86B; color: white; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .list-item { padding: 15px; border-bottom: 1px solid #eee; }
-    .list-item h4 { margin-bottom: 5px; color: #333; }
-    .list-item p { color: #666; font-size: 14px; }
     .empty { text-align: center; padding: 40px; color: #999; }
+    .operate-btn { padding: 8px 16px; background: #00A86B; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 15px; }
   </style>
 </head>
 <body>
@@ -55,242 +51,118 @@
   <!-- 管理内容区（默认隐藏） -->
   <div id="adminContent" class="admin-content hidden">
     <div class="admin-header">
-      <h2>欢迎回来，<span id="adminName"></span></h2>
+      <h2>欢迎回来，管理员</h2>
       <button class="logout-btn" id="logoutBtn">退出登录</button>
     </div>
     <div class="tab-buttons">
-      <button class="tab-btn active" data-tab="messageTab">用户留言</button>
-      <button class="tab-btn" data-tab="newsTab">公众号新闻</button>
+      <button class="tab-btn active" data-tab="newsTab">公众号新闻管理</button>
+      <button class="tab-btn" data-tab="tipsTab">操作提示</button>
     </div>
-    <!-- 留言列表 -->
-    <div id="messageTab" class="tab-content active">
-      <div id="messageList" class="list-container"></div>
+    <!-- 新闻管理 -->
+    <div id="newsTab" class="tab-content active">
+      <button class="operate-btn" id="updateNewsBtn">手动更新公众号最新10条新闻</button>
+      <div id="newsResult" class="empty">点击上方按钮更新新闻</div>
     </div>
-    <!-- 新闻列表 -->
-    <div id="newsTab" class="tab-content">
-      <button style="margin-bottom:15px; padding:8px 16px; background:#00A86B; color:white; border:none; border-radius:6px; cursor:pointer;" onclick="updateNews()">手动更新新闻</button>
-      <div id="newsList" class="list-container"></div>
+    <!-- 操作提示 -->
+    <div id="tipsTab" class="tab-content">
+      <div style="line-height: 2; color: #666; font-size: 14px;">
+        <p>✅ 用户名/密码：admin / 123456（可在代码中自行修改）</p>
+        <p>✅ 点击「手动更新新闻」将直接调用云函数抓取公众号最新内容</p>
+        <p>✅ 用户留言可在「云开发控制台→数据库→message」中查看</p>
+        <p>✅ 新闻数据可在「云开发控制台→数据库→wechatArticles」中查看</p>
+        <p>⚠️ 请妥善保管后台地址，不要对外泄露</p>
+      </div>
     </div>
   </div>
 
   <script>
-    // ====================== 仅需修改这里：替换成你的云开发环境ID ======================
+    // ====================== 可自定义修改管理员账号密码 ======================
+    const ADMIN_USER = "admin";
+    const ADMIN_PWD = "zhupeiyu";
+    // ====================== 替换成你的云开发环境ID ======================
     const envId = "cloud1-9gokdyng87192870"; // 示例：xxx-123456
-    // ==============================================================================
+    // ======================================================================
 
-    // 终极修复：初始化纯CloudBase SDK（无需AppID，适配免费版）
-    const cld = cloudbase.init({
-      env: envId,
-      authType: 'anonymous' // 匿名登录，绕开AppID和登录校验
-    });
-    // 执行匿名登录（必须，否则无法调用云函数/数据库）
-    cld.auth({ persistence: 'local' }).anonymousAuthProvider().signIn();
-    const db = cld.database();
-
-    // DOM元素获取
+    // DOM元素
     const loginArea = document.getElementById('loginArea');
     const adminContent = document.getElementById('adminContent');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const loginBtn = document.getElementById('loginBtn');
     const errorMsg = document.getElementById('errorMsg');
-    const adminName = document.getElementById('adminName');
     const logoutBtn = document.getElementById('logoutBtn');
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
+    const updateNewsBtn = document.getElementById('updateNewsBtn');
+    const newsResult = document.getElementById('newsResult');
 
-    // 核心登录逻辑（带详细日志）
-    loginBtn.addEventListener('click', async () => {
-      console.log('=== 登录流程开始 ===');
+    // 登录逻辑（纯前端校验，无SDK）
+    loginBtn.addEventListener('click', () => {
       const username = usernameInput.value.trim();
       const password = passwordInput.value.trim();
-
-      // 空值校验
-      if (!username || !password) {
-        errorMsg.textContent = '用户名和密码不能为空';
-        console.log('登录失败：用户名/密码为空');
+      
+      if (username !== ADMIN_USER || password !== ADMIN_PWD) {
+        errorMsg.textContent = '用户名或密码错误';
         return;
       }
-
-      // 按钮状态更新
-      loginBtn.disabled = true;
-      loginBtn.textContent = '登录中...';
-      errorMsg.textContent = '';
-
-      try {
-        console.log('开始调用云函数：adminLogin');
-        console.log('传入参数：', { username, password });
-
-        // 调用登录云函数
-        const res = await cld.callFunction({
-          name: 'adminLogin',
-          data: { username, password }
-        });
-
-        console.log('云函数返回结果：', res);
-        const result = res.result || {};
-
-        // 登录成功处理
-        if (result.code === 200) {
-          console.log('登录成功，存储token并显示管理页面');
-          // 本地存储token（简单鉴权）
-          localStorage.setItem('adminToken', result.data.token || '');
-          localStorage.setItem('adminUsername', result.data.username || '');
-          // 显示管理页面
-          showAdminPage(result.data.username);
-        } else {
-          // 登录失败（用户名/密码错误）
-          errorMsg.textContent = result.msg || '登录失败，请检查账号密码';
-          console.log('登录失败：', result.msg);
-        }
-      } catch (err) {
-        // 异常处理（云函数调用失败/网络错误等）
-        errorMsg.textContent = '登录失败：' + (err.message || '服务器异常');
-        console.error('云函数调用异常：', err);
-      } finally {
-        // 恢复按钮状态
-        loginBtn.disabled = false;
-        loginBtn.textContent = '登录';
-        console.log('=== 登录流程结束 ===');
-      }
-    });
-
-    // 显示管理后台页面
-    function showAdminPage(name) {
+      
+      // 登录成功，存储状态并显示后台
+      localStorage.setItem('adminLogin', 'true');
       loginArea.classList.add('hidden');
       adminContent.classList.remove('hidden');
-      adminName.textContent = name || '管理员';
-      // 加载核心数据
-      loadMessages();
-      loadNews();
-      console.log('管理页面已显示，开始加载数据');
-    }
-
-    // 退出登录（清除本地存储并刷新）
-    logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminUsername');
-      window.location.reload();
-      console.log('退出登录，已清除本地存储');
+      errorMsg.textContent = '';
     });
 
-    // 标签页切换逻辑
+    // 退出登录
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('adminLogin');
+      window.location.reload();
+    });
+
+    // 标签页切换
     tabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const tabId = btn.dataset.tab;
-        // 重置所有标签状态
         tabBtns.forEach(b => b.classList.remove('active'));
         tabContents.forEach(c => c.classList.remove('active'));
-        // 激活当前标签
         btn.classList.add('active');
         document.getElementById(tabId).classList.add('active');
-        console.log('切换到标签页：', tabId);
       });
     });
 
-    // 加载用户留言列表
-    async function loadMessages() {
-      const listEl = document.getElementById('messageList');
-      listEl.innerHTML = '加载中...';
-      console.log('开始加载用户留言数据');
-
+    // 手动更新新闻（直接调用云函数接口，无SDK）
+    updateNewsBtn.addEventListener('click', async () => {
+      updateNewsBtn.disabled = true;
+      updateNewsBtn.textContent = '更新中...';
+      newsResult.innerHTML = '<div class="empty">正在抓取公众号最新新闻，请稍候...</div>';
+      
       try {
-        const res = await db.collection('message').orderBy('createTime', 'desc').get();
-        console.log('留言数据加载结果：', res);
-
-        if (res.data.length === 0) {
-          listEl.innerHTML = '<div class="empty">暂无用户留言</div>';
-          return;
-        }
-
-        // 渲染留言列表
-        let html = '';
-        res.data.forEach(item => {
-          const time = new Date(item.createTime).toLocaleString();
-          html += `
-            <div class="list-item">
-              <h4>${item.name} (${item.phone})</h4>
-              <p>企业名称：${item.company || '未填写'}</p>
-              <p>留言内容：${item.content}</p>
-              <p style="font-size:12px; color:#999; margin-top:5px;">提交时间：${time}</p>
-            </div>
-          `;
+        // 直接调用微信云开发云函数接口
+        const res = await fetch(`https://${envId}.service.tcloudbase.com/getWechatArticles`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
         });
-        listEl.innerHTML = html;
-      } catch (err) {
-        listEl.innerHTML = `<div class="empty">加载失败：${err.message}</div>`;
-        console.error('留言数据加载失败：', err);
-      }
-    }
-
-    // 加载公众号新闻列表
-    async function loadNews() {
-      const listEl = document.getElementById('newsList');
-      listEl.innerHTML = '加载中...';
-      console.log('开始加载公众号新闻数据');
-
-      try {
-        const res = await db.collection('wechatArticles').get();
-        console.log('新闻数据加载结果：', res);
-
-        if (!res.data[0] || res.data[0].list.length === 0) {
-          listEl.innerHTML = '<div class="empty">暂无公众号新闻</div>';
-          return;
-        }
-
-        // 渲染新闻列表
-        const articles = res.data[0].list;
-        let html = '';
-        articles.forEach((item, index) => {
-          html += `
-            <div class="list-item">
-              <h4>${index + 1}. ${item.title}</h4>
-              <p style="font-size:12px; color:#999;">发布时间：${item.createTime}</p>
-              <a href="${item.url}" target="_blank" style="color:#00A86B; text-decoration:none; font-size:14px;">查看公众号原文</a>
-            </div>
-          `;
-        });
-        listEl.innerHTML = html;
-      } catch (err) {
-        listEl.innerHTML = `<div class="empty">加载失败：${err.message}</div>`;
-        console.error('新闻数据加载失败：', err);
-      }
-    }
-
-    // 手动更新公众号新闻
-    async function updateNews() {
-      if (!confirm('确定要手动更新公众号最新新闻吗？')) return;
-      console.log('开始手动更新新闻');
-
-      try {
-        const res = await cld.callFunction({ name: 'getWechatArticles' });
-        const result = res.result || {};
-
+        const result = await res.json();
+        
         if (result.code === 0) {
-          alert('新闻更新成功！');
-          console.log('新闻更新成功');
-          loadNews(); // 重新加载新闻列表
+          newsResult.innerHTML = `<div style="color: #00A86B; text-align: center; padding: 40px;">✅ 新闻更新成功！共抓取${result.data.length}条公众号最新内容</div>`;
         } else {
-          alert(`更新失败：${result.msg || '未知错误'}`);
-          console.log('新闻更新失败：', result.msg);
+          newsResult.innerHTML = `<div style="color: #ff4d4f; text-align: center; padding: 40px;">❌ 更新失败：${result.msg || '未知错误'}</div>`;
         }
       } catch (err) {
-        alert('更新失败：' + err.message);
-        console.error('新闻更新异常：', err);
+        newsResult.innerHTML = `<div style="color: #ff4d4f; text-align: center; padding: 40px;">❌ 网络错误：${err.message}</div>`;
+      } finally {
+        updateNewsBtn.disabled = false;
+        updateNewsBtn.textContent = '手动更新公众号最新10条新闻';
       }
-    }
+    });
 
-    // 页面加载时检查本地登录状态（免重复登录）
+    // 页面加载检查登录状态
     window.onload = () => {
-      console.log('页面加载完成，检查本地登录状态');
-      const token = localStorage.getItem('adminToken');
-      const username = localStorage.getItem('adminUsername');
-
-      if (token && username) {
-        console.log('检测到本地登录状态，直接显示管理页面');
-        showAdminPage(username);
-      } else {
-        console.log('无本地登录状态，显示登录页面');
+      if (localStorage.getItem('adminLogin') === 'true') {
+        loginArea.classList.add('hidden');
+        adminContent.classList.remove('hidden');
       }
     };
   </script>
