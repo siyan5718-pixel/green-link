@@ -4,35 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>绿链汇 - 管理后台</title>
-  <script src="https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@1.7.1/dist/cloudbase.min.js"></script>
+  <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-    .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 400px; }
-    .login-box h2 { text-align: center; margin-bottom: 30px; color: #333; }
-    .input-group { margin-bottom: 20px; }
-    .input-group label { display: block; margin-bottom: 8px; color: #555; font-size: 14px; }
-    .input-group input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: border-color 0.3s; }
-    .input-group input:focus { border-color: #00A86B; }
-    .login-btn { width: 100%; padding: 14px; background: #00A86B; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: background 0.3s; }
-    .login-btn:hover { background: #008f5c; }
-    .login-btn:disabled { background: #ccc; cursor: not-allowed; }
-    .error-msg { color: #ff4d4f; font-size: 13px; text-align: center; margin-top: 15px; }
-    .hidden { display: none !important; }
+    。login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 400px; }
+    。login-box h2 { text-align: center; margin-bottom: 30px; color: #333; }
+    。input-group { margin-bottom: 20px; }
+    。input-group label { display: block; margin-bottom: 8px; color: #555; font-size: 14px; }
+    。input-group input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: border-color 0.3s; }
+    。input-group input:focus { border-color: #00A86B; }
+    。login-btn { width: 100%; padding: 14px; background: #00A86B; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: background 0.3s; }
+    。login-btn:hover { background: #008f5c; }
+    。login-btn:disabled { background: #ccc; cursor: not-allowed; }
+    。error-msg { color: #ff4d4f; font-size: 13px; text-align: center; margin-top: 15px; }
+    。hidden { display: none !important; }
     /* 管理内容区 */
-    .admin-content { width: 100%; max-width: 1000px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-    .admin-header h2 { color: #333; }
-    .logout-btn { padding: 8px 16px; background: #ff4d4f; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-    .tab-btn { padding: 10px 20px; border: none; border-radius: 6px; background: #eee; cursor: pointer; }
-    .tab-btn.active { background: #00A86B; color: white; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .list-item { padding: 15px; border-bottom: 1px solid #eee; }
-    .list-item h4 { margin-bottom: 5px; color: #333; }
-    .list-item p { color: #666; font-size: 14px; }
-    .empty { text-align: center; padding: 40px; color: #999; }
+    。admin-content { width: 100%; max-width: 1000px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    。admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+    。admin-header h2 { color: #333; }
+    。logout-btn { padding: 8px 16px; background: #ff4d4f; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    。tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+    。tab-btn { padding: 10px 20px; border: none; border-radius: 6px; background: #eee; cursor: pointer; }
+    。tab-btn.active { background: #00A86B; color: white; }
+    。tab-content { display: none; }
+    。tab-content.active { display: block; }
+    。list-item { padding: 15px; border-bottom: 1px solid #eee; }
+    。list-item h4 { margin-bottom: 5px; color: #333; }
+    。list-item p { color: #666; font-size: 14px; }
+    。empty { text-align: center; padding: 40px; color: #999; }
   </style>
 </head>
 <body>
