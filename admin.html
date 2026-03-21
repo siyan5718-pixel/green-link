@@ -4,35 +4,36 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>绿链汇 - 管理后台</title>
+  <!-- 修复：使用微信官方可用的云开发 SDK -->
   <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-    。login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 400px; }
-    。login-box h2 { text-align: center; margin-bottom: 30px; color: #333; }
-    。input-group { margin-bottom: 20px; }
-    。input-group label { display: block; margin-bottom: 8px; color: #555; font-size: 14px; }
-    。input-group input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: border-color 0.3s; }
-    。input-group input:focus { border-color: #00A86B; }
-    。login-btn { width: 100%; padding: 14px; background: #00A86B; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: background 0.3s; }
-    。login-btn:hover { background: #008f5c; }
-    。login-btn:disabled { background: #ccc; cursor: not-allowed; }
-    。error-msg { color: #ff4d4f; font-size: 13px; text-align: center; margin-top: 15px; }
-    。hidden { display: none !important; }
+    .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 400px; }
+    .login-box h2 { text-align: center; margin-bottom: 30px; color: #333; }
+    .input-group { margin-bottom: 20px; }
+    .input-group label { display: block; margin-bottom: 8px; color: #555; font-size: 14px; }
+    .input-group input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: border-color 0.3s; }
+    .input-group input:focus { border-color: #00A86B; }
+    .login-btn { width: 100%; padding: 14px; background: #00A86B; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: background 0.3s; }
+    .login-btn:hover { background: #008f5c; }
+    .login-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .error-msg { color: #ff4d4f; font-size: 13px; text-align: center; margin-top: 15px; }
+    .hidden { display: none !important; }
     /* 管理内容区 */
-    。admin-content { width: 100%; max-width: 1000px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    。admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-    。admin-header h2 { color: #333; }
-    。logout-btn { padding: 8px 16px; background: #ff4d4f; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    。tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-    。tab-btn { padding: 10px 20px; border: none; border-radius: 6px; background: #eee; cursor: pointer; }
-    。tab-btn.active { background: #00A86B; color: white; }
-    。tab-content { display: none; }
-    。tab-content.active { display: block; }
-    。list-item { padding: 15px; border-bottom: 1px solid #eee; }
-    。list-item h4 { margin-bottom: 5px; color: #333; }
-    。list-item p { color: #666; font-size: 14px; }
-    。empty { text-align: center; padding: 40px; color: #999; }
+    .admin-content { width: 100%; max-width: 1000px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+    .admin-header h2 { color: #333; }
+    .logout-btn { padding: 8px 16px; background: #ff4d4f; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab-btn { padding: 10px 20px; border: none; border-radius: 6px; background: #eee; cursor: pointer; }
+    .tab-btn.active { background: #00A86B; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .list-item { padding: 15px; border-bottom: 1px solid #eee; }
+    .list-item h4 { margin-bottom: 5px; color: #333; }
+    .list-item p { color: #666; font-size: 14px; }
+    .empty { text-align: center; padding: 40px; color: #999; }
   </style>
 </head>
 <body>
@@ -73,16 +74,18 @@
   </div>
 
   <script>
-    // ====================== 替换成你的云开发环境ID ======================
-    const envId = "cloud1-9gokdyng87192870";
-    // ==================================================================
+    // ====================== 仅需修改这里：替换成你的云开发环境ID ======================
+    const envId = "cloud1-9gokdyng87192870"; // 示例：xxx-123456
+    // ==============================================================================
 
-    // 初始化云开发
-    const cld = cloudbase.init({ env: envId });
-    const auth = cld.auth();
-    const db = cld.database();
+    // 修复：初始化云开发（适配免费版，跳过登录校验）
+    const cld = cloud.init({ 
+      env: envId,
+      credentials: { skipAuth: true } // 免费版必须加，否则调用失败
+    });
+    const db = cld.database(); // 仅需数据库和云函数调用能力
 
-    // DOM元素
+    // DOM元素获取
     const loginArea = document.getElementById('loginArea');
     const adminContent = document.getElementById('adminContent');
     const usernameInput = document.getElementById('username');
@@ -94,144 +97,198 @@
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
 
-    // 登录逻辑
+    // 核心登录逻辑（带详细日志）
     loginBtn.addEventListener('click', async () => {
+      console.log('=== 登录流程开始 ===');
       const username = usernameInput.value.trim();
       const password = passwordInput.value.trim();
+
+      // 空值校验
       if (!username || !password) {
         errorMsg.textContent = '用户名和密码不能为空';
+        console.log('登录失败：用户名/密码为空');
         return;
       }
+
+      // 按钮状态更新
       loginBtn.disabled = true;
       loginBtn.textContent = '登录中...';
       errorMsg.textContent = '';
 
       try {
-        // 调用云函数验证
+        console.log('开始调用云函数：adminLogin');
+        console.log('传入参数：', { username, password });
+
+        // 调用登录云函数
         const res = await cld.callFunction({
           name: 'adminLogin',
           data: { username, password }
         });
 
-        const result = res.result;
+        console.log('云函数返回结果：', res);
+        const result = res.result || {};
+
+        // 登录成功处理
         if (result.code === 200) {
-          // 登录成功：存token到本地存储
-          localStorage.setItem('adminToken', result.data.token);
-          localStorage.setItem('adminUsername', result.data.username);
+          console.log('登录成功，存储token并显示管理页面');
+          // 本地存储token（简单鉴权）
+          localStorage.setItem('adminToken', result.data.token || '');
+          localStorage.setItem('adminUsername', result.data.username || '');
           // 显示管理页面
           showAdminPage(result.data.username);
         } else {
-          errorMsg.textContent = result.msg;
+          // 登录失败（用户名/密码错误）
+          errorMsg.textContent = result.msg || '登录失败，请检查账号密码';
+          console.log('登录失败：', result.msg);
         }
       } catch (err) {
-        errorMsg.textContent = '登录失败：' + err.message;
+        // 异常处理（云函数调用失败/网络错误等）
+        errorMsg.textContent = '登录失败：' + (err.message || '服务器异常');
+        console.error('云函数调用异常：', err);
       } finally {
+        // 恢复按钮状态
         loginBtn.disabled = false;
         loginBtn.textContent = '登录';
+        console.log('=== 登录流程结束 ===');
       }
     });
 
-    // 显示管理页面
+    // 显示管理后台页面
     function showAdminPage(name) {
       loginArea.classList.add('hidden');
       adminContent.classList.remove('hidden');
-      adminName.textContent = name;
-      // 加载数据
+      adminName.textContent = name || '管理员';
+      // 加载核心数据
       loadMessages();
       loadNews();
+      console.log('管理页面已显示，开始加载数据');
     }
 
-    // 退出登录
+    // 退出登录（清除本地存储并刷新）
     logoutBtn.addEventListener('click', () => {
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminUsername');
       window.location.reload();
+      console.log('退出登录，已清除本地存储');
     });
 
-    // 切换标签
+    // 标签页切换逻辑
     tabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const tabId = btn.dataset.tab;
+        // 重置所有标签状态
         tabBtns.forEach(b => b.classList.remove('active'));
         tabContents.forEach(c => c.classList.remove('active'));
+        // 激活当前标签
         btn.classList.add('active');
         document.getElementById(tabId).classList.add('active');
+        console.log('切换到标签页：', tabId);
       });
     });
 
-    // 加载用户留言
+    // 加载用户留言列表
     async function loadMessages() {
       const listEl = document.getElementById('messageList');
       listEl.innerHTML = '加载中...';
+      console.log('开始加载用户留言数据');
+
       try {
         const res = await db.collection('message').orderBy('createTime', 'desc').get();
+        console.log('留言数据加载结果：', res);
+
         if (res.data.length === 0) {
           listEl.innerHTML = '<div class="empty">暂无用户留言</div>';
           return;
         }
+
+        // 渲染留言列表
         let html = '';
         res.data.forEach(item => {
           const time = new Date(item.createTime).toLocaleString();
           html += `
             <div class="list-item">
               <h4>${item.name} (${item.phone})</h4>
-              <p>企业：${item.company || '未填写'}</p>
-              <p>内容：${item.content}</p>
-              <p style="font-size:12px; color:#999; margin-top:5px;">${time}</p>
+              <p>企业名称：${item.company || '未填写'}</p>
+              <p>留言内容：${item.content}</p>
+              <p style="font-size:12px; color:#999; margin-top:5px;">提交时间：${time}</p>
             </div>
           `;
         });
         listEl.innerHTML = html;
       } catch (err) {
         listEl.innerHTML = `<div class="empty">加载失败：${err.message}</div>`;
+        console.error('留言数据加载失败：', err);
       }
     }
 
-    // 加载公众号新闻
+    // 加载公众号新闻列表
     async function loadNews() {
       const listEl = document.getElementById('newsList');
       listEl.innerHTML = '加载中...';
+      console.log('开始加载公众号新闻数据');
+
       try {
         const res = await db.collection('wechatArticles').get();
+        console.log('新闻数据加载结果：', res);
+
         if (!res.data[0] || res.data[0].list.length === 0) {
           listEl.innerHTML = '<div class="empty">暂无公众号新闻</div>';
           return;
         }
+
+        // 渲染新闻列表
         const articles = res.data[0].list;
         let html = '';
         articles.forEach((item, index) => {
           html += `
             <div class="list-item">
               <h4>${index + 1}. ${item.title}</h4>
-              <p style="font-size:12px; color:#999;">${item.createTime}</p>
-              <a href="${item.url}" target="_blank" style="color:#00A86B; text-decoration:none; font-size:14px;">查看原文</a>
+              <p style="font-size:12px; color:#999;">发布时间：${item.createTime}</p>
+              <a href="${item.url}" target="_blank" style="color:#00A86B; text-decoration:none; font-size:14px;">查看公众号原文</a>
             </div>
           `;
         });
         listEl.innerHTML = html;
       } catch (err) {
         listEl.innerHTML = `<div class="empty">加载失败：${err.message}</div>`;
+        console.error('新闻数据加载失败：', err);
       }
     }
 
-    // 手动更新新闻
+    // 手动更新公众号新闻
     async function updateNews() {
-      if (!confirm('确定更新公众号新闻？')) return;
+      if (!confirm('确定要手动更新公众号最新新闻吗？')) return;
+      console.log('开始手动更新新闻');
+
       try {
-        await cld.callFunction({ name: 'getWechatArticles' });
-        alert('更新成功！');
-        loadNews();
+        const res = await cld.callFunction({ name: 'getWechatArticles' });
+        const result = res.result || {};
+
+        if (result.code === 0) {
+          alert('新闻更新成功！');
+          console.log('新闻更新成功');
+          loadNews(); // 重新加载新闻列表
+        } else {
+          alert(`更新失败：${result.msg || '未知错误'}`);
+          console.log('新闻更新失败：', result.msg);
+        }
       } catch (err) {
         alert('更新失败：' + err.message);
+        console.error('新闻更新异常：', err);
       }
     }
 
-    // 页面加载时检查是否已登录
+    // 页面加载时检查本地登录状态（免重复登录）
     window.onload = () => {
+      console.log('页面加载完成，检查本地登录状态');
       const token = localStorage.getItem('adminToken');
-      const name = localStorage.getItem('adminUsername');
-      if (token && name) {
-        showAdminPage(name);
+      const username = localStorage.getItem('adminUsername');
+
+      if (token && username) {
+        console.log('检测到本地登录状态，直接显示管理页面');
+        showAdminPage(username);
+      } else {
+        console.log('无本地登录状态，显示登录页面');
       }
     };
   </script>
