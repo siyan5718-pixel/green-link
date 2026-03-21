@@ -65,6 +65,7 @@
         <li><a href="#green-power" class="hover:text-primary transition-colors">绿动力</a></li>
         <li><a href="#chain-solution" class="hover:text-primary transition-colors">链方案</a></li>
         <li><a href="#hui-finance" class="hover:text-primary transition-colors">汇金融</a></li>
+        <li><a href="#news" class="hover:text-primary transition-colors">新闻动态</a></li>
         <li><a href="#about-us" class="hover:text-primary transition-colors">关于我们</a></li>
       </ul>
       <!-- 移动端汉堡菜单 -->
@@ -79,6 +80,7 @@
         <li><a href="#green-power" class="py-2 hover:text-primary transition-colors">绿动力</a></li>
         <li><a href="#chain-solution" class="py-2 hover:text-primary transition-colors">链方案</a></li>
         <li><a href="#hui-finance" class="py-2 hover:text-primary transition-colors">汇金融</a></li>
+        <li><a href="#news" class="py-2 hover:text-primary transition-colors">新闻动态</a></li>
         <li><a href="#about-us" class="py-2 hover:text-primary transition-colors">关于我们</a></li>
       </ul>
     </div>
@@ -255,8 +257,28 @@
     </div>
   </section>
 
-  <!-- 5. 关于我们板块（已加合作案例图片位置） -->
-  <section id="about-us" class="section-padding bg-gray-50">
+  <!-- 5. 新增：新闻动态板块（从云函数加载） -->
+  <section id="news" class="section-padding bg-gray-50">
+    <div class="container mx-auto px-4 md:px-8">
+      <!-- 板块标题 -->
+      <div class="text-center mb-16 animate__animated animate__fadeInUp">
+        <h2 class="text-[clamp(1.8rem,4vw,3rem)] font-bold mb-4">新闻动态</h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">聚焦行业前沿，分享绿链汇最新动态与行业资讯</p>
+        <div class="w-20 h-1 bg-primary mx-auto mt-6"></div>
+      </div>
+      <!-- 新闻列表容器（JS动态填充） -->
+      <div id="newsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <!-- 加载中提示 -->
+        <div class="col-span-full text-center py-10">
+          <i class="fas fa-spinner fa-spin text-primary text-3xl"></i>
+          <p class="mt-4 text-gray-600">正在加载新闻...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 关于我们板块（已加合作案例图片位置） -->
+  <section id="about-us" class="section-padding bg-white">
     <div class="container mx-auto px-4 md:px-8">
       <!-- 板块标题 -->
       <div class="text-center mb-16 animate__animated animate__fadeInUp">
@@ -368,7 +390,7 @@
     </div>
   </footer>
 
-  <!-- JS 交互 + 留言提交对接云函数 -->
+  <!-- JS 交互 + 留言提交 + 新闻加载 -->
   <script>
     // ====================== 这里填写你的云开发环境ID ======================
     const envId = "cloud1-9gokdyng87192870";
@@ -408,28 +430,24 @@
       });
     });
 
-    // 留言提交
+    // ---------------------- 1. 留言提交（保留原有） ----------------------
     const form = document.getElementById('messageForm');
     const tip = document.getElementById('tip');
-
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('name').value.trim();
       const phone = document.getElementById('phone').value.trim();
       const company = document.getElementById('company').value.trim();
       const message = document.getElementById('message').value.trim();
-
       const btn = form.querySelector('button');
       btn.disabled = true;
       btn.textContent = "提交中...";
-
       try {
         const res = await axios({
           url: `https://${envId}.tcb-api.tencentcloudapi.com/web/${envId}/submitMessage`,
           method: 'POST',
           data: { name, phone, company, message }
         });
-
         tip.classList.remove('hidden','text-red-500','text-green-600');
         tip.classList.add('text-green-600');
         tip.textContent = "提交成功！我们会尽快与您联系";
@@ -444,6 +462,45 @@
         setTimeout(() => tip.classList.add('hidden'), 3000);
       }
     });
+
+    // ---------------------- 2. 新增：加载新闻列表 ----------------------
+    async function loadNews() {
+      const newsList = document.getElementById('newsList');
+      try {
+        // 调用云函数获取新闻
+        const res = await axios.get(`https://${envId}.tcb-api.tencentcloudapi.com/web/${envId}/getNews`);
+        const news = res.data;
+        // 清空加载提示
+        newsList.innerHTML = '';
+        // 渲染新闻卡片
+        if (news.length === 0) {
+          newsList.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500">暂无新闻</div>';
+          return;
+        }
+        news.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'bg-white border border-gray-200 rounded-xl overflow-hidden shadow-md card-hover animate__animated animate__fadeInUp';
+          card.innerHTML = `
+            <img src="${item.cover || 'https://via.placeholder.com/400x250?text=News'}" alt="${item.title}" class="w-full h-48 object-cover">
+            <div class="p-6">
+              <div class="text-sm text-gray-500 mb-2">${item.date || '2025-01-01'}</div>
+              <h3 class="text-xl font-bold mb-3 line-clamp-2">${item.title}</h3>
+              <p class="text-gray-600 mb-4 line-clamp-3">${item.content || '暂无简介'}</p>
+              <a href="news-detail.html?id=${item._id}" class="inline-block px-4 py-2 bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors">
+                查看详情 <i class="fas fa-arrow-right ml-1"></i>
+              </a>
+            </div>
+          `;
+          newsList.appendChild(card);
+        });
+      } catch (err) {
+        newsList.innerHTML = '<div class="col-span-full text-center py-10 text-red-500">加载新闻失败，请刷新重试</div>';
+        console.error('加载新闻失败', err);
+      }
+    }
+
+    // 页面加载完成后自动加载新闻
+    window.addEventListener('DOMContentLoaded', loadNews);
   </script>
 </body>
 </html>
