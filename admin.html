@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>绿链汇 - 管理后台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div class="container">
+    <h1 class="text-2xl font-bold mb-6 text-[#00A86B]">绿链汇管理后台</h1>
+
+    <!-- 登录区域 -->
+    <div id="loginArea" class="card text-center py-10">
+      <div id="loginBtn" class="px-6 py-3 bg-[#00A86B] text-white rounded-lg inline-block cursor-pointer hover:bg-[#008a56] transition">
+        <i class="fab fa-weixin mr-2"></i>微信扫码登录
+      </div>
+      <p class="text-gray-500 mt-4">扫码即可登录管理后台</p>
+    </div>
+
+    <!-- 后台内容（登录后显示） -->
+    <div id="adminContent" class="hidden">
+      <!-- 功能导航 -->
+      <div class="flex flex-wrap gap-4 mb-6">
+        <button onclick="showTab('messageTab')" class="px-4 py-2 bg-[#00A86B] text-white rounded-lg hover:bg-[#008a56] transition">用户留言</button>
+        <button onclick="showTab('newsTab')" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition">公众号新闻</button>
+        <button onclick="updateNews()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">手动更新新闻</button>
+        <button onclick="logout()" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 transition ml-auto">退出登录</button>
+      </div>
+
+      <!-- 留言列表 -->
+      <div id="messageTab" class="card block">
+        <h2 class="text-xl font-bold mb-4">用户留言</h2>
+        <div id="messageList" class="space-y-4">
+          <div class="text-center py-4 text-gray-500">加载中...</div>
+        </div>
+      </div>
+
+      <!-- 新闻列表 -->
+      <div id="newsTab" class="card hidden">
+        <h2 class="text-xl font-bold mb-4">公众号新闻</h2>
+        <div id="newsList" class="space-y-4">
+          <div class="text-center py-4 text-gray-500">加载中...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ====================== 只需要改这里：你的云开发环境ID ======================
+    const envId = "你的云开发环境ID";
+    // =========================================================================
+
+    // 初始化云开发
+    const cld = cloud.init({
+      env: envId,
+      credentials: { skipAuth: true } // 免鉴权，简化登录
+    });
+
+    // 页面加载后自动检查登录状态
+    window.onload = async () => {
+      await checkLoginStatus();
+    };
+
+    // 检查登录状态
+    async function checkLoginStatus() {
+      try {
+        // 尝试获取当前登录用户
+        const user = await cld.auth().getUserInfo();
+        if (user) {
+          // 已登录，显示后台内容
+          document.getElementById('loginArea').classList.add('hidden');
+          document.getElementById('adminContent').classList.remove('hidden');
+          // 加载数据
+          loadMessages();
+          loadNews();
+        } else {
+          // 未登录，绑定扫码登录事件
+          bindLoginEvent();
+        }
+      } catch (err) {
+        // 未登录，绑定扫码登录事件
+        bindLoginEvent();
+      }
+    }
+
+    // 绑定扫码登录事件
+    function bindLoginEvent() {
+      document.getElementById('loginBtn').onclick = async () => {
+        try {
+          // 微信扫码登录（弹出扫码框）
+          await cld.auth().signInWithWeixin({
+            redirectUri: window.location.href, // 登录后返回当前页面
+            scope: 'snsapi_login' // 扫码登录模式
+          });
+          // 登录成功后刷新页面
+          window.location.reload();
+        } catch (err) {
+          alert('登录失败：' + err.message);
+        }
+      };
+    }
+
+    // 切换标签页
+    function showTab(tabId) {
+      // 隐藏所有标签
+      document.querySelectorAll('[id$="Tab"]').forEach(tab => {
+        tab.classList.add('hidden');
+      });
+      // 显示选中标签
+      document.getElementById(tabId).classList.remove('hidden');
+      // 重置按钮样式
+      document.querySelectorAll('.flex button').forEach(btn => {
+        btn.classList.remove('bg-[#00A86B]', 'text-white');
+        btn.classList.add('bg-gray-200');
+      });
+      // 高亮当前按钮
+      event.target.classList.add('bg-[#00A86B]', 'text-white');
+      event.target.classList.remove('bg-gray-200');
+    }
+
+    // 加载用户留言
+    async function loadMessages() {
+      const listEl = document.getElementById('messageList');
+      try {
+        // 从数据库获取留言，按时间倒序
+        const res = await cld.database().collection('message').orderBy('createTime', 'desc').get();
+        if (res.data.length === 0) {
+          listEl.innerHTML = '<p class="text-gray-500 text-center py-4">暂无用户留言</p>';
+          return;
+        }
+        // 渲染留言列表
+        let html = '';
+        res.data.forEach(item => {
+          const time = new Date(item.createTime).toLocaleString();
+          html += `
+            <div class="border-b border-gray-200 pb-4">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-gray-800">${item.name} (${item.phone})</span>
+                <span class="text-xs text-gray-500">${time}</span>
+              </div>
+              <div class="text-sm text-gray-600 mt-2">企业名称：${item.company || '未填写'}</div>
+              <div class="mt-2 text-gray-700">留言内容：${item.content}</div>
+            </div>
+          `;
+        });
+        listEl.innerHTML = html;
+      } catch (err) {
+        listEl.innerHTML = `<p class="text-red-500 text-center py-4">加载失败：${err.message}</p>`;
+      }
+    }
+
+    // 加载公众号新闻
+    async function loadNews() {
+      const listEl = document.getElementById('newsList');
+      try {
+        // 从数据库获取新闻数据
+        const res = await cld.database().collection('wechatArticles').get();
+        if (!res.data[0] || res.data[0].list.length === 0) {
+          listEl.innerHTML = '<p class="text-gray-500 text-center py-4">暂无公众号新闻</p>';
+          return;
+        }
+        // 渲染新闻列表
+        const articles = res.data[0].list;
+        let html = '';
+        articles.forEach((item, index) => {
+          html += `
+            <div class="border-b border-gray-200 pb-4">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-gray-800">${index + 1}. ${item.title}</span>
+                <span class="text-xs text-gray-500">${item.createTime}</span>
+              </div>
+              <a href="${item.url}" target="_blank" class="text-[#00A86B] text-sm mt-1 inline-block hover:underline">
+                <i class="fas fa-external-link-alt mr-1"></i>查看公众号原文
+              </a>
+            </div>
+          `;
+        });
+        listEl.innerHTML = html;
+      } catch (err) {
+        listEl.innerHTML = `<p class="text-red-500 text-center py-4">加载失败：${err.message}</p>`;
+      }
+    }
+
+    // 手动更新公众号新闻
+    async function updateNews() {
+      if (!confirm('确定要手动更新公众号最新新闻吗？')) return;
+      try {
+        // 调用云函数抓取最新新闻
+        const res = await cld.callFunction({ name: 'getWechatArticles' });
+        if (res.result.code === 0) {
+          alert('新闻更新成功！');
+          loadNews(); // 重新加载新闻列表
+        } else {
+          alert(`更新失败：${res.result.msg}`);
+        }
+      } catch (err) {
+        alert(`更新失败：${err.message}`);
+      }
+    }
+
+    // 退出登录
+    function logout() {
+      cld.auth().signOut(); // 退出登录
+      window.location.reload(); // 刷新页面回到登录页
+    }
+  </script>
+</body>
+</html>
