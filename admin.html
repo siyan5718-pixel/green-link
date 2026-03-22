@@ -19,17 +19,29 @@
     .error-msg { color: #ff4d4f; font-size: 13px; text-align: center; margin-top: 15px; }
     .hidden { display: none !important; }
     /* 管理内容区 */
-    .admin-content { width: 100%; max-width: 1000px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .admin-content { width: 100%; max-width: 1200px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
     .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
     .admin-header h2 { color: #333; }
     .logout-btn { padding: 8px 16px; background: #ff4d4f; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-    .tab-btn { padding: 10px 20px; border: none; border-radius: 6px; background: #eee; cursor: pointer; }
+    .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-btn { padding: 10px 20px; border: none; border-radius: 6px; background: #eee; cursor: pointer; transition: background 0.3s; }
     .tab-btn.active { background: #00A86B; color: white; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .empty { text-align: center; padding: 40px; color: #999; }
-    .operate-btn { padding: 8px 16px; background: #00A86B; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 15px; }
+    .operate-btn { padding: 8px 16px; background: #00A86B; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 15px; transition: background 0.3s; }
+    .operate-btn:hover { background: #008f5c; }
+    .operate-btn:disabled { background: #ccc; cursor: not-allowed; }
+    /* 列表样式 */
+    .list-container { max-height: 70vh; overflow-y: auto; padding-right: 10px; }
+    .list-item { padding: 15px; border-bottom: 1px solid #eee; margin-bottom: 10px; border-radius: 8px; background: #f9f9f9; }
+    .list-item h4 { margin-bottom: 8px; color: #333; font-size: 16px; }
+    .list-item p { color: #666; font-size: 14px; line-height: 1.6; margin-bottom: 5px; }
+    .list-item .time { font-size: 12px; color: #999; margin-top: 5px; }
+    .list-item a { color: #00A86B; text-decoration: none; }
+    .list-item a:hover { text-decoration: underline; }
+    /* 加载样式 */
+    .loading { text-align: center; padding: 20px; color: #666; }
   </style>
 </head>
 <body>
@@ -51,36 +63,45 @@
   <!-- 管理内容区（默认隐藏） -->
   <div id="adminContent" class="admin-content hidden">
     <div class="admin-header">
-      <h2>欢迎回来，管理员</h2>
+      <h2>绿链汇管理后台</h2>
       <button class="logout-btn" id="logoutBtn">退出登录</button>
     </div>
     <div class="tab-buttons">
-      <button class="tab-btn active" data-tab="newsTab">公众号新闻管理</button>
+      <button class="tab-btn active" data-tab="messageTab">用户留言</button>
+      <button class="tab-btn" data-tab="newsTab">公众号新闻</button>
       <button class="tab-btn" data-tab="tipsTab">操作提示</button>
     </div>
-    <!-- 新闻管理 -->
-    <div id="newsTab" class="tab-content active">
-      <button class="operate-btn" id="updateNewsBtn">手动更新公众号最新10条新闻</button>
-      <div id="newsResult" class="empty">点击上方按钮更新新闻</div>
+
+    <!-- 1. 用户留言标签页 -->
+    <div id="messageTab" class="tab-content active">
+      <button class="operate-btn" id="refreshMessageBtn">刷新留言列表</button>
+      <div id="messageList" class="list-container loading">正在加载留言数据...</div>
     </div>
-    <!-- 操作提示 -->
+
+    <!-- 2. 公众号新闻标签页 -->
+    <div id="newsTab" class="tab-content">
+      <button class="operate-btn" id="updateNewsBtn">手动更新公众号新闻</button>
+      <button class="operate-btn" style="background: #666; margin-left: 10px;" id="refreshNewsBtn">刷新新闻列表</button>
+      <div id="newsList" class="list-container loading">正在加载新闻数据...</div>
+    </div>
+
+    <!-- 3. 操作提示标签页 -->
     <div id="tipsTab" class="tab-content">
-      <div style="line-height: 2; color: #666; font-size: 14px;">
-        <p>✅ 用户名/密码：admin / 123456（可在代码中自行修改）</p>
-        <p>✅ 点击「手动更新新闻」将直接调用云函数抓取公众号最新内容</p>
-        <p>✅ 用户留言可在「云开发控制台→数据库→message」中查看</p>
-        <p>✅ 新闻数据可在「云开发控制台→数据库→wechatArticles」中查看</p>
+      <div style="line-height: 2; color: #666; font-size: 14px; padding: 10px;">
+        <p>✅ 管理员账号：admin / 123456（可在代码中修改）</p>
+        <p>✅ 「刷新留言/新闻」：加载最新的留言/新闻数据</p>
+        <p>✅ 「手动更新新闻」：调用云函数抓取公众号最新10条内容</p>
         <p>⚠️ 请妥善保管后台地址，不要对外泄露</p>
+        <p>⚠️ 数据加载失败请检查：云开发环境ID是否正确、云函数是否部署、网络是否正常</p>
       </div>
     </div>
   </div>
 
   <script>
-    // ====================== 可自定义修改管理员账号密码 ======================
-    const ADMIN_USER = "admin";
-    const ADMIN_PWD = "zhupeiyu";
-    // ====================== 替换成你的云开发环境ID ======================
-    const envId = "cloud1-9gokdyng87192870"; // 示例：xxx-123456
+    // ====================== 自定义配置（仅需改这里） ======================
+    const ADMIN_USER = "admin";        // 管理员用户名
+    const ADMIN_PWD = "zhupeiyu";        // 管理员密码
+    const envId = "cloud1-9gokdyng87192870";  // 替换成你的环境ID（如：xxx-123456）
     // ======================================================================
 
     // DOM元素
@@ -93,10 +114,18 @@
     const logoutBtn = document.getElementById('logoutBtn');
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
+    
+    // 留言相关
+    const refreshMessageBtn = document.getElementById('refreshMessageBtn');
+    const messageList = document.getElementById('messageList');
+    
+    // 新闻相关
     const updateNewsBtn = document.getElementById('updateNewsBtn');
-    const newsResult = document.getElementById('newsResult');
+    const refreshNewsBtn = document.getElementById('refreshNewsBtn');
+    const newsList = document.getElementById('newsList');
 
-    // 登录逻辑（纯前端校验，无SDK）
+    // ---------------------- 核心逻辑：登录/退出 ----------------------
+    // 登录（纯前端校验）
     loginBtn.addEventListener('click', () => {
       const username = usernameInput.value.trim();
       const password = passwordInput.value.trim();
@@ -106,11 +135,15 @@
         return;
       }
       
-      // 登录成功，存储状态并显示后台
+      // 登录成功
       localStorage.setItem('adminLogin', 'true');
       loginArea.classList.add('hidden');
       adminContent.classList.remove('hidden');
       errorMsg.textContent = '';
+      
+      // 加载初始数据
+      loadMessageData();
+      loadNewsData();
     });
 
     // 退出登录
@@ -119,25 +152,80 @@
       window.location.reload();
     });
 
-    // 标签页切换
+    // ---------------------- 核心逻辑：标签页切换 ----------------------
     tabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const tabId = btn.dataset.tab;
+        // 切换按钮样式
         tabBtns.forEach(b => b.classList.remove('active'));
         tabContents.forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(tabId).classList.add('active');
+        
+        // 切换到对应标签时自动刷新数据
+        if (tabId === 'messageTab') loadMessageData();
+        if (tabId === 'newsTab') loadNewsData();
       });
     });
 
-    // 手动更新新闻（直接调用云函数接口，无SDK）
+    // ---------------------- 核心逻辑：加载用户留言 ----------------------
+    refreshMessageBtn.addEventListener('click', loadMessageData);
+    
+    async function loadMessageData() {
+      messageList.innerHTML = '<div class="loading">正在加载留言数据...</div>';
+      try {
+        // 直接调用云开发数据库接口获取留言
+        const res = await fetch(`https://${envId}.service.tcloudbase.com/webaccess/database/collection/message/get`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: {
+              orderBy: { createTime: 'desc' }, // 按时间倒序
+              limit: 100 // 最多加载100条
+            }
+          })
+        });
+        
+        const result = await res.json();
+        if (result.code !== 0 || !result.data) throw new Error(result.msg || '加载失败');
+        
+        const data = result.data;
+        if (data.length === 0) {
+          messageList.innerHTML = '<div class="empty">暂无用户留言</div>';
+          return;
+        }
+        
+        // 渲染留言列表
+        let html = '';
+        data.forEach(item => {
+          const time = item.createTime ? new Date(item.createTime).toLocaleString() : '未知时间';
+          html += `
+            <div class="list-item">
+              <h4>👤 ${item.name || '匿名用户'} (${item.phone || '未留电话'})</h4>
+              <p>🏢 企业名称：${item.company || '未填写'}</p>
+              <p>💬 留言内容：${item.content || '无内容'}</p>
+              <p class="time">⏰ 提交时间：${time}</p>
+            </div>
+          `;
+        });
+        messageList.innerHTML = html;
+      } catch (err) {
+        messageList.innerHTML = `<div class="empty" style="color: #ff4d4f;">❌ 留言加载失败：${err.message}</div>`;
+        console.error('加载留言失败：', err);
+      }
+    }
+
+    // ---------------------- 核心逻辑：加载/更新新闻 ----------------------
+    // 刷新新闻列表
+    refreshNewsBtn.addEventListener('click', loadNewsData);
+    // 手动更新新闻
     updateNewsBtn.addEventListener('click', async () => {
       updateNewsBtn.disabled = true;
       updateNewsBtn.textContent = '更新中...';
-      newsResult.innerHTML = '<div class="empty">正在抓取公众号最新新闻，请稍候...</div>';
+      newsList.innerHTML = '<div class="loading">正在抓取公众号最新新闻...</div>';
       
       try {
-        // 直接调用微信云开发云函数接口
+        // 调用更新新闻的云函数
         const res = await fetch(`https://${envId}.service.tcloudbase.com/getWechatArticles`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -146,23 +234,69 @@
         const result = await res.json();
         
         if (result.code === 0) {
-          newsResult.innerHTML = `<div style="color: #00A86B; text-align: center; padding: 40px;">✅ 新闻更新成功！共抓取${result.data.length}条公众号最新内容</div>`;
+          alert('✅ 新闻更新成功！');
+          loadNewsData(); // 更新后刷新列表
         } else {
-          newsResult.innerHTML = `<div style="color: #ff4d4f; text-align: center; padding: 40px;">❌ 更新失败：${result.msg || '未知错误'}</div>`;
+          throw new Error(result.msg || '更新失败');
         }
       } catch (err) {
-        newsResult.innerHTML = `<div style="color: #ff4d4f; text-align: center; padding: 40px;">❌ 网络错误：${err.message}</div>`;
+        newsList.innerHTML = `<div class="empty" style="color: #ff4d4f;">❌ 新闻更新失败：${err.message}</div>`;
+        console.error('更新新闻失败：', err);
       } finally {
         updateNewsBtn.disabled = false;
-        updateNewsBtn.textContent = '手动更新公众号最新10条新闻';
+        updateNewsBtn.textContent = '手动更新公众号新闻';
       }
     });
 
-    // 页面加载检查登录状态
+    // 加载新闻列表
+    async function loadNewsData() {
+      newsList.innerHTML = '<div class="loading">正在加载新闻数据...</div>';
+      try {
+        // 调用数据库接口获取新闻
+        const res = await fetch(`https://${envId}.service.tcloudbase.com/webaccess/database/collection/wechatArticles/get`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: {} })
+        });
+        
+        const result = await res.json();
+        if (result.code !== 0 || !result.data || result.data.length === 0) {
+          newsList.innerHTML = '<div class="empty">暂无新闻数据，请点击「手动更新公众号新闻」</div>';
+          return;
+        }
+        
+        const articles = result.data[0].list || [];
+        if (articles.length === 0) {
+          newsList.innerHTML = '<div class="empty">暂无新闻数据，请点击「手动更新公众号新闻」</div>';
+          return;
+        }
+        
+        // 渲染新闻列表
+        let html = '';
+        articles.forEach((item, index) => {
+          html += `
+            <div class="list-item">
+              <h4>${index + 1}. ${item.title || '无标题'}</h4>
+              <p class="time">📅 发布时间：${item.createTime || '未知时间'}</p>
+              <p>🔗 <a href="${item.url || '#'}" target="_blank">点击查看公众号原文</a></p>
+            </div>
+          `;
+        });
+        newsList.innerHTML = html;
+      } catch (err) {
+        newsList.innerHTML = `<div class="empty" style="color: #ff4d4f;">❌ 新闻加载失败：${err.message}</div>`;
+        console.error('加载新闻失败：', err);
+      }
+    }
+
+    // ---------------------- 页面初始化 ----------------------
     window.onload = () => {
+      // 检查登录状态，免重复登录
       if (localStorage.getItem('adminLogin') === 'true') {
         loginArea.classList.add('hidden');
         adminContent.classList.remove('hidden');
+        loadMessageData();
+        loadNewsData();
       }
     };
   </script>
