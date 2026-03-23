@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>绿链汇管理后台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root { --primary: #00A86B; }
+    .sidebar { width: 220px; }
+    .main-content { margin-left: 220px; }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; }
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar fixed left-0 top-0 h-full bg-dark text-white p-4">
+    <div class="text-xl font-bold mb-6">
+      <i class="fas fa-leaf text-primary"></i> 绿链汇后台
+    </div>
+    <nav class="space-y-1">
+      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-primary/20" data-page="dashboard">
+        <i class="fas fa-home w-5"></i> 控制台
+      </a>
+      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-primary/20" data-page="news">
+        <i class="fas fa-newspaper w-5"></i> 新闻管理
+      </a>
+      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-primary/20" data-page="messages">
+        <i class="fas fa-comments w-5"></i> 客户留言
+      </a>
+      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-primary/20" data-page="wechat">
+        <i class="fab fa-weixin w-5"></i> 公众号同步
+      </a>
+      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-primary/20" data-page="setting">
+        <i class="fas fa-cog w-5"></i> 基础设置
+      </a>
+    </nav>
+    <div class="absolute bottom-4 left-4 text-xs text-gray-400">
+      微信云开发驱动
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="main-content p-6">
+    
+    <!-- 控制台 -->
+    <section id="page-dashboard" class="page-section">
+      <h1 class="text-2xl font-bold mb-6">控制台</h1>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-lg shadow">
+          <div class="text-gray-500 text-sm">新闻总数</div>
+          <div class="text-2xl font-bold text-primary" id="news-count">-</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+          <div class="text-gray-500 text-sm">留言总数</div>
+          <div class="text-2xl font-bold text-blue-500" id="msg-count">-</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+          <div class="text-gray-500 text-sm">未读留言</div>
+          <div class="text-2xl font-bold text-orange-500" id="unread-count">-</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+          <div class="text-gray-500 text-sm">公众号文章</div>
+          <div class="text-2xl font-bold text-green-500" id="wechat-count">-</div>
+        </div>
+      </div>
+      
+      <div class="mt-6 bg-white rounded-lg p-4 shadow">
+        <h3 class="font-bold mb-3">使用说明</h3>
+        <ul class="text-sm text-gray-600 space-y-2">
+          <li>• <b>新闻管理</b>：手动添加新闻到官网显示</li>
+          <li>• <b>客户留言</b>：查看并回复官网留言</li>
+          <li>• <b>公众号同步</b>：一键获取公众号最新10篇文章</li>
+          <li>• 所有数据存储在微信云开发数据库，完全免费！</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 新闻管理 -->
+    <section id="page-news" class="page-section hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">新闻管理</h1>
+        <button onclick="showNewsModal()" class="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90">
+          <i class="fas fa-plus mr-1"></i>添加新闻
+        </button>
+      </div>
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-sm">标题</th>
+              <th class="px-4 py-3 text-left text-sm">链接</th>
+              <th class="px-4 py-3 text-left text-sm">发布时间</th>
+              <th class="px-4 py-3 text-left text-sm">状态</th>
+              <th class="px-4 py-3 text-left text-sm">操作</th>
+            </tr>
+          </thead>
+          <tbody id="news-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 留言管理 -->
+    <section id="page-messages" class="page-section hidden">
+      <h1 class="text-2xl font-bold mb-4">客户留言</h1>
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-sm">姓名</th>
+              <th class="px-4 py-3 text-left text-sm">电话</th>
+              <th class="px-4 py-3 text-left text-sm">企业</th>
+              <th class="px-4 py-3 text-left text-sm">内容</th>
+              <th class="px-4 py-3 text-left text-sm">时间</th>
+              <th class="px-4 py-3 text-left text-sm">状态</th>
+              <th class="px-4 py-3 text-left text-sm">操作</th>
+            </tr>
+          </thead>
+          <tbody id="messages-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 公众号文章管理 -->
+    <section id="page-wechat" class="page-section hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">公众号文章</h1>
+        <div class="space-x-2">
+          <button onclick="syncWechat()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            <i class="fas fa-sync mr-1"></i>同步公众号
+          </button>
+          <button onclick="showWechatModal()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+            <i class="fas fa-plus mr-1"></i>手动添加
+          </button>
+        </div>
+      </div>
+      <p class="text-gray-500 text-sm mb-4">点击「同步公众号」自动获取公众号最近10篇文章，或点击「手动添加」</p>
+      <div id="sync-status" class="mb-4 text-sm"></div>
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-sm">标题</th>
+              <th class="px-4 py-3 text-left text-sm">链接</th>
+              <th class="px-4 py-3 text-left text-sm">添加时间</th>
+              <th class="px-4 py-3 text-left text-sm">操作</th>
+            </tr>
+          </thead>
+          <tbody id="wechat-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 基础设置 -->
+    <section id="page-setting" class="page-section hidden">
+      <h1 class="text-2xl font-bold mb-4">基础设置</h1>
+      <div class="bg-white rounded-lg p-6 shadow max-w-lg">
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">公司名称</label>
+          <input type="text" id="setting-company" class="w-full border rounded px-3 py-2" value="上海绿链汇数字科技有限公司">
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">联系电话</label>
+          <input type="text" id="setting-phone" class="w-full border rounded px-3 py-2" value="13917108817">
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">企业邮箱</label>
+          <input type="email" id="setting-email" class="w-full border rounded px-3 py-2" value="peiyuzhu@17i56.cn">
+        </div>
+        <button onclick="saveSetting()" class="bg-primary text-white px-4 py-2 rounded">保存设置</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 新闻弹窗 -->
+  <div id="news-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+      <h2 class="text-lg font-bold mb-4">添加新闻</h2>
+      <form id="news-form" class="space-y-3">
+        <div>
+          <label class="block text-sm mb-1">新闻标题 *</label>
+          <input type="text" id="news-title" class="w-full border rounded px-3 py-2" required>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">文章链接</label>
+          <input type="url" id="news-link" class="w-full border rounded px-3 py-2" placeholder="https://...">
+        </div>
+        <div>
+          <label class="block text-sm mb-1">发布时间</label>
+          <input type="date" id="news-time" class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm mb-1">状态</label>
+          <select id="news-status" class="w-full border rounded px-3 py-2">
+            <option value="1">显示</option>
+            <option value="0">隐藏</option>
+          </select>
+        </div>
+        <div class="flex gap-2 justify-end pt-2">
+          <button type="button" onclick="hideNewsModal()" class="px-4 py-2 border rounded">取消</button>
+          <button type="submit" class="px-4 py-2 bg-primary text-white rounded">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 公众号文章弹窗 -->
+  <div id="wechat-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+      <h2 class="text-lg font-bold mb-4">添加公众号文章</h2>
+      <form id="wechat-form" class="space-y-3">
+        <div>
+          <label class="block text-sm mb-1">文章标题 *</label>
+          <input type="text" id="wechat-title" class="w-full border rounded px-3 py-2" required>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">文章链接 *</label>
+          <input type="url" id="wechat-url" class="w-full border rounded px-3 py-2" placeholder="https://mp.weixin.qq.com/..." required>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">文章摘要</label>
+          <textarea id="wechat-digest" class="w-full border rounded px-3 py-2" rows="2"></textarea>
+        </div>
+        <div class="flex gap-2 justify-end pt-2">
+          <button type="button" onclick="hideWechatModal()" class="px-4 py-2 border rounded">取消</button>
+          <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
+  <script>
+    // 初始化云开发 - 替换为你的环境ID
+    const ENV_ID = "cloud1-9gokdyng87192870";
+    const db = cloud.database();
+    const cld = cloud.init({ env: ENV_ID, credentials: { skipAuth: true } });
+
+    // 导航
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = item.dataset.page;
+        showPage(page);
+      });
+    });
+
+    function showPage(page) {
+      document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById('page-' + page).classList.remove('hidden');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('bg-primary/20'));
+      document.querySelector(`[data-page="${page}"]`).classList.add('bg-primary/20');
+      
+      if (page === 'dashboard') loadDashboard();
+      if (page === 'news') loadNews();
+      if (page === 'messages') loadMessages();
+      if (page === 'wechat') loadWechat();
+      if (page === 'setting') loadSetting();
+    }
+
+    // 加载控制台
+    async function loadDashboard() {
+      try {
+        const [news, msg, wechat] = await Promise.all([
+          db.collection('news').count(),
+          db.collection('messages').count(),
+          db.collection('wechat_articles').count()
+        ]);
+        document.getElementById('news-count').textContent = news.total || 0;
+        document.getElementById('msg-count').textContent = msg.total || 0;
+        document.getElementById('wechat-count').textContent = wechat.total || 0;
+        
+        const unread = await db.collection('messages').where({status: 'unread'}).count();
+        document.getElementById('unread-count').textContent = unread.total || 0;
+      } catch(e) { console.error(e); }
+    }
+
+    // 加载新闻
+    async function loadNews() {
+      const res = await db.collection('news').orderBy('createTime', 'desc').get();
+      const tbody = document.getElementById('news-table');
+      if (!res.data.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">暂无新闻</td></tr>';
+        return;
+      }
+      tbody.innerHTML = res.data.map(item => `
+        <tr class="border-t">
+          <td class="px-4 py-3">${item.title}</td>
+          <td class="px-4 py-3 text-sm text-blue-500 truncate max-w-xs">${item.link || '-'}</td>
+          <td class="px-4 py-3 text-sm">${item.publishTime || '-'}</td>
+          <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs ${item.status === 1 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}">${item.status === 1 ? '显示' : '隐藏'}</span></td>
+          <td class="px-4 py-3">
+            <button onclick="deleteNews('${item._id}')" class="text-red-500 text-sm">删除</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // 加载留言
+    async function loadMessages() {
+      const res = await db.collection('messages').orderBy('createTime', 'desc').get();
+      const tbody = document.getElementById('messages-table');
+      if (!res.data.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">暂无留言</td></tr>';
+        return;
+      }
+      tbody.innerHTML = res.data.map(item => `
+        <tr class="border-t">
+          <td class="px-4 py-3">${item.name || '-'}</td>
+          <td class="px-4 py-3">${item.phone || '-'}</td>
+          <td class="px-4 py-3">${item.company || '-'}</td>
+          <td class="px-4 py-3 max-w-xs truncate">${item.message || '-'}</td>
+          <td class="px-4 py-3 text-sm">${item.createTime ? new Date(item.createTime).toLocaleString() : '-'}</td>
+          <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs ${item.status === 'unread' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}">${item.status === 'unread' ? '未读' : '已读'}</span></td>
+          <td class="px-4 py-3">
+            ${item.status === 'unread' ? `<button onclick="markRead('${item._id}')" class="text-blue-500 text-sm mr-2">已读</button>` : ''}
+            <button onclick="deleteMessage('${item._id}')" class="text-red-500 text-sm">删除</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // 加载公众号文章
+    async function loadWechat() {
+      const res = await db.collection('wechat_articles').orderBy('createTime', 'desc').limit(10).get();
+      const tbody = document.getElementById('wechat-table');
+      if (!res.data.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">暂无文章，点击上方"添加文章"</td></tr>';
+        return;
+      }
+      tbody.innerHTML = res.data.map(item => `
+        <tr class="border-t">
+          <td class="px-4 py-3">${item.title}</td>
+          <td class="px-4 py-3 text-blue-500 text-sm truncate max-w-xs">${item.url || '-'}</td>
+          <td class="px-4 py-3 text-sm">${item.createTime ? new Date(item.createTime).toLocaleDateString() : '-'}</td>
+          <td class="px-4 py-3">
+            <a href="${item.url}" target="_blank" class="text-blue-500 text-sm mr-2">查看</a>
+            <button onclick="deleteWechat('${item._id}')" class="text-red-500 text-sm">删除</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+    
+    // 删除公众号文章
+    async function deleteWechat(id) {
+      if (!confirm('确定删除？')) return;
+      await db.collection('wechat_articles').doc(id).remove();
+      loadWechat();
+    }
+
+    // 同步公众号文章（调用云函数）
+    async function syncWechat() {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同步中...';
+      
+      const statusEl = document.getElementById('sync-status');
+      
+      try {
+        const res = await cld.callFunction({
+          name: 'getWechatArticles'
+        });
+        
+        console.log('云函数返回:', res);
+        
+        if (res.result && res.result.code === 0) {
+          statusEl.innerHTML = '<span class="text-green-500">✓ 同步成功！共获取' + res.result.data.length + '篇文章</span>';
+          loadWechat();
+        } else {
+          statusEl.innerHTML = '<span class="text-red-500">✗ 同步失败：' + (res.result ? res.result.msg : '未知错误') + '</span>';
+        }
+      } catch(e) {
+        console.error(e);
+        statusEl.innerHTML = '<span class="text-red-500">✗ 调用失败：' + e.message + '</span>';
+      }
+      
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sync mr-1"></i>同步公众号';
+    }
+
+    // 显示公众号文章弹窗
+    function showWechatModal() {
+      document.getElementById('wechat-modal').classList.remove('hidden');
+      document.getElementById('wechat-modal').classList.add('flex');
+    }
+    function hideWechatModal() {
+      document.getElementById('wechat-modal').classList.add('hidden');
+      document.getElementById('wechat-modal').classList.remove('flex');
+    }
+    
+    // 提交公众号文章
+    document.getElementById('wechat-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await db.collection('wechat_articles').add({
+        data: {
+          title: document.getElementById('wechat-title').value,
+          url: document.getElementById('wechat-url').value,
+          digest: document.getElementById('wechat-digest').value,
+          source: '公众号',
+          createTime: db.serverDate()
+        }
+      });
+      hideWechatModal();
+      loadWechat();
+      alert('添加成功');
+    });
+
+    // 保存设置
+    async function saveSetting() {
+      const data = {
+        company: document.getElementById('setting-company').value,
+        phone: document.getElementById('setting-phone').value,
+        email: document.getElementById('setting-email').value
+      };
+      
+      // 保存到数据库
+      const res = await db.collection('settings').doc('company_info').set({ data });
+      alert('保存成功！');
+    }
+
+    async function loadSetting() {
+      try {
+        const res = await db.collection('settings').doc('company_info').get();
+        if (res.data) {
+          document.getElementById('setting-company').value = res.data.company || '';
+          document.getElementById('setting-phone').value = res.data.phone || '';
+          document.getElementById('setting-email').value = res.data.email || '';
+        }
+      } catch(e) {}
+    }
+
+    // 新闻操作
+    function showNewsModal() {
+      document.getElementById('news-modal').classList.remove('hidden');
+      document.getElementById('news-modal').classList.add('flex');
+      document.getElementById('news-time').value = new Date().toISOString().split('T')[0];
+    }
+    function hideNewsModal() {
+      document.getElementById('news-modal').classList.add('hidden');
+      document.getElementById('news-modal').classList.remove('flex');
+    }
+    
+    document.getElementById('news-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await db.collection('news').add({
+        data: {
+          title: document.getElementById('news-title').value,
+          link: document.getElementById('news-link').value,
+          publishTime: document.getElementById('news-time').value,
+          status: parseInt(document.getElementById('news-status').value),
+          createTime: db.serverDate()
+        }
+      });
+      hideNewsModal();
+      loadNews();
+      alert('添加成功');
+    });
+
+    async function deleteNews(id) {
+      if (!confirm('确定删除？')) return;
+      await db.collection('news').doc(id).remove();
+      loadNews();
+    }
+
+    async function markRead(id) {
+      await db.collection('messages').doc(id).update({ data: { status: 'read' } });
+      loadMessages();
+    }
+
+    async function deleteMessage(id) {
+      if (!confirm('确定删除？')) return;
+      await db.collection('messages').doc(id).remove();
+      loadMessages();
+    }
+
+    // 默认加载控制台
+    loadDashboard();
+  </script>
+</body>
+</html>
