@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>绿链汇管理后台</title>
-  <!-- 引入云开发SDK -->
+  <!-- 先加载云开发SDK -->
   <script src="https://imgcache.qq.com/qcloud/cloudbase.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -25,7 +25,7 @@
 <body class="bg-gray-100">
 
   <!-- 移动端菜单按钮 -->
-  <button onclick="toggleSidebar()" class="md:hidden fixed top-4 left-4 z-50 bg-primary text-white p-2 rounded-lg shadow-lg">
+  <button id="mobile-menu-btn" onclick="toggleSidebar()" class="md:hidden fixed top-4 left-4 z-50 bg-primary text-white p-2 rounded-lg shadow-lg">
     <i class="fas fa-bars"></i>
   </button>
 
@@ -62,7 +62,6 @@
     <!-- 控制台 -->
     <section id="page-dashboard" class="page-section">
       <h1 class="text-2xl font-bold mb-6">控制台</h1>
-      <div id="init-status" class="mb-4 p-2 rounded bg-yellow-100 text-yellow-700 text-sm">正在连接云数据库...</div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white p-4 rounded-lg shadow">
           <div class="text-gray-500 text-sm">新闻总数</div>
@@ -80,6 +79,15 @@
           <div class="text-gray-500 text-sm">公众号文章</div>
           <div class="text-2xl font-bold text-green-500" id="wechat-count">-</div>
         </div>
+      </div>
+      
+      <div class="mt-6 bg-white rounded-lg p-4 shadow">
+        <h3 class="font-bold mb-3">使用说明</h3>
+        <ul class="text-sm text-gray-600 space-y-2">
+          <li>• <b>新闻管理</b>：手动添加新闻到官网显示</li>
+          <li>• <b>客户留言</b>：查看官网客户的留言</li>
+          <li>• <b>公众号文章</b>：手动添加公众号文章链接</li>
+        </ul>
       </div>
     </section>
 
@@ -192,7 +200,7 @@
         <div>
           <label class="block text-sm mb-1 text-gray-800">封面图片</label>
           <input type="url" id="wechat-image" class="w-full border rounded px-3 py-2 text-gray-800" placeholder="https://...">
-          <p class="text-xs text-gray-500 mt-1">建议使用其他图床（如 sm.ms）</p>
+          <p class="text-xs text-gray-500 mt-1">⚠️ 微信公众号图片无法显示，建议使用其他图床</p>
         </div>
         <div>
           <label class="block text-sm mb-1 text-gray-800">文章摘要</label>
@@ -209,28 +217,8 @@
   <script>
     // 云开发配置
     var ENV_ID = 'cloud1-9gokdyng87192870';
-    var dbApp = null;
-    var db = null;
-    var cloudReady = false;
 
-    // 初始化云数据库
-    function initCloud() {
-      if (dbApp) return;
-      try {
-        dbApp = cloudbase.init({ env: ENV_ID });
-        db = dbApp.database();
-        cloudReady = true;
-        document.getElementById('init-status').textContent = '✓ 已连接云数据库';
-        document.getElementById('init-status').className = 'mb-4 p-2 rounded bg-green-100 text-green-700 text-sm';
-        console.log('云数据库初始化成功');
-      } catch(e) {
-        console.error('初始化失败:', e);
-        document.getElementById('init-status').textContent = '✗ 连接失败: ' + e.message;
-        document.getElementById('init-status').className = 'mb-4 p-2 rounded bg-red-100 text-red-700 text-sm';
-      }
-    }
-
-    // 检查登录
+    // 检查登录状态
     if (localStorage.getItem('admin_logged_in') !== 'true') {
       window.location.href = 'login.html';
     }
@@ -243,7 +231,7 @@
       }
     }
 
-    // 移动端菜单
+    // 移动端菜单切换
     function toggleSidebar() {
       var sidebar = document.getElementById('sidebar');
       if (window.innerWidth <= 768) {
@@ -261,104 +249,157 @@
         e.preventDefault();
         var page = item.dataset.page;
         showPage(page);
+        // 移动端点击后关闭菜单
         if (window.innerWidth <= 768) {
           document.getElementById('sidebar').classList.remove('mobile-open');
         }
       });
     });
 
-    function showPage(page) {
-      document.querySelectorAll('.page-section').forEach(function(s) { s.classList.add('hidden'); });
-      document.getElementById('page-' + page).classList.remove('hidden');
-      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('bg-green-300'); });
-      document.querySelector('[data-page="' + page + '"]').classList.add('bg-green-300');
+    // ============ 云数据库操作 ============
+    
+    // 检查并初始化云数据库
+    function ensureDB() {
+      if (typeof cloudbase === 'undefined') {
+        console.log('等待云SDK加载...');
+        return null;
+      }
       
-      if (page === 'dashboard') loadDashboard();
-      if (page === 'news') loadNews();
-      if (page === 'messages') loadMessages();
-      if (page === 'wechat') loadWechat();
-    }
-
-    // 云数据库操作
-    function cloudAdd(collection, data, callback) {
-      if (!cloudReady) {
-        alert('云数据库未连接');
-        return;
-      }
-      db.collection(collection).add({
-        data: data,
-        success: function(res) {
-          callback(true, res.id);
-        },
-        fail: function(err) {
-          alert('添加失败: ' + err.message);
-          callback(false);
+      if (!db) {
+        try {
+          dbApp = cloudbase.init({ env: ENV_ID });
+          db = dbApp.database();
+          console.log('云数据库初始化成功');
+        } catch(e) {
+          console.error('初始化失败:', e);
+          return null;
         }
-      });
-    }
-
-    function cloudGet(collection, callback) {
-      if (!cloudReady) {
-        callback([]);
-        return;
       }
-      db.collection(collection).orderBy('createTime', 'desc').get({
-        success: function(res) {
-          callback(res.data);
-        },
-        fail: function(err) {
-          console.error('获取失败:', err);
-          callback([]);
-        }
-      });
+      return db;
     }
-
-    function cloudDelete(collection, id, callback) {
-      if (!cloudReady) {
-        alert('云数据库未连接');
-        return;
+    
+    var dbApp = null;
+    var db = null;
+    
+    // 初始化云数据库
+    function initDB() {
+      if (!dbApp) {
+        dbApp = cloudbase.init({
+          env: ENV_ID
+        });
+        // 匿名登录
+        try {
+          dbApp.auth().signInAnonymously();
+        } catch(e) {}
+        db = dbApp.database();
       }
-      db.collection(collection).doc(id).remove({
-        success: function() {
-          callback(true);
-        },
-        fail: function(err) {
-          alert('删除失败: ' + err.message);
-          callback(false);
-        }
-      });
+      return { app: dbApp, db: db };
     }
 
-    // 加载控制台
-    function loadDashboard() {
-      initCloud();
+    // 调用云数据库
+    async function callDB(action, collection, data, id) {
+      var database = ensureDB();
+      if (!database) {
+        throw new Error('云数据库未初始化');
+      }
+      var coll = database.collection(collection);
       
-      cloudGet('news', function(data) {
-        document.getElementById('news-count').textContent = data ? data.length : 0;
-      });
-      cloudGet('messages', function(data) {
-        document.getElementById('msg-count').textContent = data ? data.length : 0;
-        if (data) {
-          var unread = data.filter(function(m) { return m.status === 'unread'; }).length;
-          document.getElementById('unread-count').textContent = unread;
+      return new Promise(function(resolve, reject) {
+        try {
+          if (action === 'add') {
+            coll.add({
+              data: data,
+              success: function(res) {
+                resolve({ success: true, id: res.id });
+              },
+              fail: function(err) {
+                reject(new Error(err.message || '添加失败'));
+              }
+            });
+          } else if (action === 'get') {
+            coll.get({
+              success: function(res) {
+                resolve({ success: true, data: res.data });
+              },
+              fail: function(err) {
+                reject(new Error(err.message || '查询失败'));
+              }
+            });
+          } else if (action === 'count') {
+            coll.count({
+              success: function(res) {
+                resolve({ success: true, total: res.total });
+              },
+              fail: function(err) {
+                reject(new Error(err.message || '统计失败'));
+              }
+            });
+          } else if (action === 'delete') {
+            coll.doc(id).remove({
+              success: function(res) {
+                resolve({ success: true });
+              },
+              fail: function(err) {
+                reject(new Error(err.message || '删除失败'));
+              }
+            });
+          }
+        } catch(e) {
+          reject(e);
         }
-      });
-      cloudGet('wechat_articles', function(data) {
-        document.getElementById('wechat-count').textContent = data ? data.length : 0;
       });
     }
 
-    // 加载新闻
-    function loadNews() {
+    // 加载控制台数据
+    async function loadDashboard() {
+      try {
+        var newsCount = await getCount('news');
+        var msgCount = await getCount('messages');
+        var wechatCount = await getCount('wechat_articles');
+        var unreadCount = await getCount('messages', { status: 'unread' });
+        
+        document.getElementById('news-count').textContent = newsCount;
+        document.getElementById('msg-count').textContent = msgCount;
+        document.getElementById('wechat-count').textContent = wechatCount;
+        document.getElementById('unread-count').textContent = unreadCount;
+      } catch(e) {
+        console.error('加载失败:', e);
+        document.getElementById('news-count').textContent = 'Error';
+        document.getElementById('msg-count').textContent = 'Error';
+        document.getElementById('wechat-count').textContent = 'Error';
+        document.getElementById('unread-count').textContent = 'Error';
+      }
+    }
+
+    // 获取集合数量
+    async function getCount(collectionName, filter) {
+      try {
+        var result = await callDB('count', collectionName, filter);
+        if (result && result.total !== undefined) {
+          return result.total || 0;
+        }
+        return 0;
+      } catch(e) {
+        console.error('count error:', e);
+        return 0;
+      }
+    }
+
+    // 加载新闻列表
+    async function loadNews() {
       document.getElementById('news-loading').style.display = 'block';
-      cloudGet('news', function(data) {
+      try {
+        var result = await callDB('get', 'news', null);
+        
         document.getElementById('news-loading').style.display = 'none';
         var tbody = document.getElementById('news-table');
-        if (!data || data.length === 0) {
+        
+        if (!result.data || result.data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">暂无新闻，点击上方添加</td></tr>';
           return;
         }
-        tbody.innerHTML = data.map(function(item) {
+        
+        tbody.innerHTML = data.data.map(function(item) {
           return '<tr class="border-t">' +
             '<td class="px-4 py-3">' + item.title + '</td>' +
             '<td class="px-4 py-3 text-sm text-blue-500 truncate max-w-xs">' + (item.link || '-') + '</td>' +
@@ -366,7 +407,10 @@
             '<td class="px-4 py-3"><button onclick="deleteNews(\'' + item._id + '\')" class="text-red-500 text-sm">删除</button></td>' +
           '</tr>';
         }).join('');
-      });
+      } catch(e) {
+        document.getElementById('news-loading').style.display = 'none';
+        document.getElementById('news-table').innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-red-500">加载失败</td></tr>';
+      }
     }
 
     // 添加新闻
@@ -379,45 +423,55 @@
       document.getElementById('news-modal').classList.remove('flex');
     }
     
-    document.getElementById('news-form').addEventListener('submit', function(e) {
+    document.getElementById('news-form').addEventListener('submit', async function(e) {
       e.preventDefault();
-      cloudAdd('news', {
+      
+      var data = {
         title: document.getElementById('news-title').value,
         link: document.getElementById('news-link').value,
         publishTime: new Date().toLocaleDateString()
-      }, function(success) {
-        if (success) {
-          hideNewsModal();
-          document.getElementById('news-title').value = '';
-          document.getElementById('news-link').value = '';
-          loadNews();
-          loadDashboard();
-          alert('添加成功');
-        }
-      });
+      };
+      
+      try {
+        await callDB('add', 'news', data);
+        
+        hideNewsModal();
+        document.getElementById('news-title').value = '';
+        document.getElementById('news-link').value = '';
+        loadNews();
+        loadDashboard();
+        alert('添加成功');
+      } catch(e) {
+        alert('添加失败: ' + e.message);
+      }
     });
 
-    function deleteNews(id) {
+    async function deleteNews(id) {
       if (!confirm('确定删除？')) return;
-      cloudDelete('news', id, function(success) {
-        if (success) {
-          loadNews();
-          loadDashboard();
-        }
-      });
+      try {
+        await callDB('delete', 'news', null, id);
+        loadNews();
+        loadDashboard();
+      } catch(e) {
+        alert('删除失败: ' + e.message);
+      }
     }
 
-    // 加载留言
-    function loadMessages() {
+    // 加载留言列表
+    async function loadMessages() {
       document.getElementById('messages-loading').style.display = 'block';
-      cloudGet('messages', function(data) {
+      try {
+        var result = await callDB('get', 'messages', null);
+        
         document.getElementById('messages-loading').style.display = 'none';
         var tbody = document.getElementById('messages-table');
-        if (!data || data.length === 0) {
+        
+        if (!result.data || result.data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">暂无留言</td></tr>';
           return;
         }
-        tbody.innerHTML = data.map(function(item) {
+        
+        tbody.innerHTML = result.data.map(function(item) {
           return '<tr class="border-t">' +
             '<td class="px-4 py-3">' + (item.name || '-') + '</td>' +
             '<td class="px-4 py-3">' + (item.phone || '-') + '</td>' +
@@ -427,38 +481,49 @@
             '<td class="px-4 py-3"><button onclick="deleteMessage(\'' + item._id + '\')" class="text-red-500 text-sm">删除</button></td>' +
           '</tr>';
         }).join('');
-      });
+      } catch(e) {
+        document.getElementById('messages-loading').style.display = 'none';
+      }
     }
 
-    function deleteMessage(id) {
+    async function deleteMessage(id) {
       if (!confirm('确定删除？')) return;
-      cloudDelete('messages', id, function(success) {
-        if (success) {
-          loadMessages();
-          loadDashboard();
-        }
-      });
+      try {
+        await callDB('delete', 'messages', null, id);
+        loadMessages();
+        loadDashboard();
+      } catch(e) {
+        alert('删除失败: ' + e.message);
+      }
     }
 
-    // 加载公众号文章
-    function loadWechat() {
+    // 加载公众号文章列表
+    async function loadWechat() {
       document.getElementById('wechat-loading').style.display = 'block';
-      cloudGet('wechat_articles', function(data) {
+      try {
+        var result = await callDB('get', 'wechat_articles', null);
+        
         document.getElementById('wechat-loading').style.display = 'none';
         var tbody = document.getElementById('wechat-table');
-        if (!data || data.length === 0) {
+        
+        if (!result.data || result.data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">暂无文章，点击上方添加</td></tr>';
           return;
         }
-        tbody.innerHTML = data.map(function(item) {
+        
+        tbody.innerHTML = result.data.map(function(item) {
+          var imgSrc = item.image || 'https://via.placeholder.com/60x40?text=无图';
           return '<tr class="border-t">' +
-            '<td class="px-4 py-3"><span class="font-medium">' + item.title + '</span></td>' +
+            '<td class="px-4 py-3"><div class="flex items-center gap-3"><img src="' + imgSrc + '" class="w-16 h-10 object-cover rounded"><span class="font-medium">' + item.title + '</span></div></td>' +
             '<td class="px-4 py-3 text-blue-500 text-sm truncate max-w-xs">' + (item.url || '-') + '</td>' +
             '<td class="px-4 py-3 text-sm">' + (item.createTime ? new Date(item.createTime).toLocaleDateString() : '-') + '</td>' +
             '<td class="px-4 py-3"><a href="' + (item.url || '#') + '" target="_blank" class="text-blue-500 text-sm mr-2">查看</a><button onclick="deleteWechat(\'' + item._id + '\')" class="text-red-500 text-sm">删除</button></td>' +
           '</tr>';
         }).join('');
-      });
+      } catch(e) {
+        document.getElementById('wechat-loading').style.display = 'none';
+        document.getElementById('wechat-table').innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-red-500">加载失败</td></tr>';
+      }
     }
 
     // 添加公众号文章
@@ -471,36 +536,42 @@
       document.getElementById('wechat-modal').classList.remove('flex');
     }
     
-    document.getElementById('wechat-form').addEventListener('submit', function(e) {
+    document.getElementById('wechat-form').addEventListener('submit', async function(e) {
       e.preventDefault();
-      cloudAdd('wechat_articles', {
+      
+      var data = {
         title: document.getElementById('wechat-title').value,
         url: document.getElementById('wechat-url').value,
         image: document.getElementById('wechat-image').value,
         digest: document.getElementById('wechat-digest').value,
         source: '手动添加'
-      }, function(success) {
-        if (success) {
-          hideWechatModal();
-          document.getElementById('wechat-title').value = '';
-          document.getElementById('wechat-url').value = '';
-          document.getElementById('wechat-image').value = '';
-          document.getElementById('wechat-digest').value = '';
-          loadWechat();
-          loadDashboard();
-          alert('添加成功');
-        }
-      });
+      };
+      
+      try {
+        await callDB('add', 'wechat_articles', data);
+        
+        hideWechatModal();
+        document.getElementById('wechat-title').value = '';
+        document.getElementById('wechat-url').value = '';
+        document.getElementById('wechat-image').value = '';
+        document.getElementById('wechat-digest').value = '';
+        loadWechat();
+        loadDashboard();
+        alert('添加成功');
+      } catch(e) {
+        alert('添加失败: ' + e.message);
+      }
     });
 
-    function deleteWechat(id) {
+    async function deleteWechat(id) {
       if (!confirm('确定删除？')) return;
-      cloudDelete('wechat_articles', id, function(success) {
-        if (success) {
-          loadWechat();
-          loadDashboard();
-        }
-      });
+      try {
+        await callDB('delete', 'wechat_articles', null, id);
+        loadWechat();
+        loadDashboard();
+      } catch(e) {
+        alert('删除失败: ' + e.message);
+      }
     }
 
     // 默认加载控制台
