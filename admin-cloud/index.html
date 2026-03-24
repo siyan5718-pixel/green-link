@@ -267,6 +267,11 @@
     // 加载控制台
     async function loadDashboard() {
       try {
+        document.getElementById('news-count').textContent = '加载中...';
+        document.getElementById('msg-count').textContent = '加载中...';
+        document.getElementById('wechat-count').textContent = '加载中...';
+        document.getElementById('unread-count').textContent = '加载中...';
+        
         const [news, msg, wechat] = await Promise.all([
           db.collection('news').count(),
           db.collection('messages').count(),
@@ -278,7 +283,11 @@
         
         const unread = await db.collection('messages').where({status: 'unread'}).count();
         document.getElementById('unread-count').textContent = unread.total || 0;
-      } catch(e) { console.error(e); }
+      } catch(e) { 
+        console.error(e);
+        document.getElementById('news-count').textContent = 'Error';
+        alert('连接云数据库失败，请确保：\n1. 数据库集合已创建\n2. 网页安全域名已配置\n\n错误信息：' + e.message);
+      }
     }
 
     // 加载新闻
