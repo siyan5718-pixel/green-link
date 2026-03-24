@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "openapi": [
+      "永久素材管理"
+    ]
+  },
+  "trigger": {
+    "name": "dailySync",
+    "type": "timer",
+    "config": "0 0 8 * * * *"
+  }
+}
