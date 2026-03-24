@@ -8,14 +8,14 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root { --primary: #00A86B; }
-    。sidebar { width: 220px; }
-    。main-content { margin-left: 220px; }
-    。sidebar a { color: #1f2937; font-weight: 500; }
-    。sidebar a:hover { background: #bbf7d0; }
-    。sidebar .fas, .sidebar .fab { color: #15803d; }
+    .sidebar { width: 220px; }
+    .main-content { margin-left: 220px; }
+    .sidebar a { color: #1f2937; font-weight: 500; }
+    .sidebar a:hover { background: #bbf7d0; }
+    .sidebar .fas, .sidebar .fab { color: #15803d; }
     @media (max-width: 768px) {
-      。sidebar { display: none; }
-      。main-content { margin-left: 0; }
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; }
     }
   </style>
 </head>
@@ -199,6 +199,7 @@
 
   <!-- 引入微信云开发SDK -->
   <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
+  <script src="https://imgcache.qq.com/qcloud/cloudbase_js/0.9.5/cloudbase.js"></script>
 
   <script>
     // 检查登录状态
@@ -243,7 +244,7 @@
     });
 
     function showPage(page) {
-      document。querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
+      document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
       document.getElementById('page-' + page).classList.remove('hidden');
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('bg-green-300'));
       document.querySelector(`[data-page="${page}"]`).classList.add('bg-green-300');
@@ -413,47 +414,48 @@
       
       statusEl.innerHTML = '<span class="text-gray-500">正在调用云函数，请稍候...</span>';
       
-      // 尝试调用云函数
-      if (typeof cloud !== 'undefined') {
-        try {
-          const cld = cloud.init({ env: 'cloud1-9gokdyng87192870' });
-          cld.callFunction({
-            name: 'getWechatArticles',
-            success: function(res) {
-              console.log('云函数返回:', res);
-              if (res.result && res.result.code === 0) {
-                // 将云函数返回的文章同步到本地存储
-                const data = getData();
-                data.wechat = res.result.data.map(item => ({
+      // 使用云开发SDK调用云函数
+      try {
+        var app = cloud.init({
+          env: 'cloud1-9gokdyng87192870'
+        });
+        var db = app.database();
+        
+        // 调用云函数
+        app.callFunction({
+          name: 'getWechatArticles',
+          success: function(res) {
+            console.log('云函数返回:', res);
+            if (res.result && res.result.code === 0) {
+              // 将云函数返回的文章同步到本地存储
+              var data = getData();
+              data.wechat = res.result.data.map(function(item) {
+                return {
                   title: item.title,
                   url: item.url,
                   time: new Date().toLocaleDateString()
-                }));
-                saveData(data);
-                statusEl.innerHTML = '<span class="text-green-600">✓ 同步成功！共获取' + res.result.data.length + '篇文章</span>';
-                loadWechat();
-                loadDashboard();
-              } else {
-                statusEl.innerHTML = '<span class="text-red-500">✗ 同步失败：' + (res.result ? res.result.msg : '未知错误') + '</span>';
-              }
-              btn.disabled = false;
-              btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
-            },
-            fail: function(err) {
-              console.error('调用失败:', err);
-              statusEl.innerHTML = '<span class="text-red-500">✗ 调用失败：' + err.message + '</span><br><span class="text-gray-500 text-sm">请确保云函数已部署，或使用手动添加</span>';
-              btn.disabled = false;
-              btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
+                };
+              });
+              saveData(data);
+              statusEl.innerHTML = '<span class="text-green-600">✓ 同步成功！共获取' + res.result.data.length + '篇文章</span>';
+              loadWechat();
+              loadDashboard();
+            } else {
+              statusEl.innerHTML = '<span class="text-red-500">✗ 同步失败：' + (res.result ? res.result.msg : '未知错误') + '</span>';
             }
-          });
-        } catch(e) {
-          console.error(e);
-          statusEl.innerHTML = '<span class="text-red-500">✗ 初始化失败：' + e.message + '<br>请使用手动添加文章</span>';
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
-        }
-      } else {
-        statusEl.innerHTML = '<span class="text-red-500">✗ 云开发SDK未加载<br>请使用手动添加文章</span>';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
+          },
+          fail: function(err) {
+            console.error('调用失败:', err);
+            statusEl.innerHTML = '<span class="text-red-500">✗ 调用失败：' + err.message + '</span><br><span class="text-gray-500 text-sm">请确保云函数已部署，或使用手动添加</span>';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
+          }
+        });
+      } catch(e) {
+        console.error(e);
+        statusEl.innerHTML = '<span class="text-red-500">✗ 初始化失败：' + e.message + '<br>请使用手动添加文章</span>';
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
       }
