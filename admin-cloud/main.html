@@ -43,9 +43,6 @@
         <i class="fas fa-sign-out-alt w-5"></i> 退出登录
       </a>
     </nav>
-    <div class="absolute bottom-4 left-4 text-xs text-gray-400">
-      微信云开发驱动
-    </div>
   </aside>
 
   <!-- 主内容 -->
@@ -77,9 +74,9 @@
         <h3 class="font-bold mb-3">使用说明</h3>
         <ul class="text-sm text-gray-600 space-y-2">
           <li>• <b>新闻管理</b>：手动添加新闻到官网显示</li>
-          <li>• <b>客户留言</b>：查看并回复官网留言</li>
+          <li>• <b>客户留言</b>：查看官网客户的留言</li>
           <li>• <b>公众号同步</b>：一键获取公众号最新10篇文章</li>
-          <li>• 所有数据存储在微信云开发数据库，完全免费！</li>
+          <li>• <b>基础设置</b>：修改公司联系方式</li>
         </ul>
       </div>
     </section>
@@ -129,7 +126,7 @@
       </div>
     </section>
 
-    <!-- 公众号文章管理 -->
+    <!-- 公众号同步 -->
     <section id="page-wechat" class="page-section hidden">
       <div class="flex justify-between items-center mb-4">
         <h1 class="text-2xl font-bold">公众号文章</h1>
@@ -240,6 +237,12 @@
 
   <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
   <script>
+    // 云开发配置
+    const ENV_ID = "cloud1-9gokdyng87192870";
+    
+    // 初始化
+    const cld = cloud.init({ env: ENV_ID, timeout: 15000 });
+    const db = cld.database();
     // 检查登录状态
     if (localStorage.getItem('admin_logged_in') !== 'true') {
       window.location.href = 'login.html';
@@ -252,11 +255,6 @@
         window.location.href = 'login.html';
       }
     }
-
-    // 初始化云开发 - 替换为你的环境ID
-    const ENV_ID = "cloud1-9gokdyng87192870";
-    const db = cloud.database();
-    const cld = cloud.init({ env: ENV_ID, credentials: { skipAuth: true } });
 
     // 导航
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -282,12 +280,12 @@
 
     // 加载控制台
     async function loadDashboard() {
+      document.getElementById('news-count').textContent = '加载中...';
+      document.getElementById('msg-count').textContent = '加载中...';
+      document.getElementById('wechat-count').textContent = '加载中...';
+      document.getElementById('unread-count').textContent = '加载中...';
+      
       try {
-        document.getElementById('news-count').textContent = '加载中...';
-        document.getElementById('msg-count').textContent = '加载中...';
-        document.getElementById('wechat-count').textContent = '加载中...';
-        document.getElementById('unread-count').textContent = '加载中...';
-        
         const [news, msg, wechat] = await Promise.all([
           db.collection('news').count(),
           db.collection('messages').count(),
@@ -300,9 +298,12 @@
         const unread = await db.collection('messages').where({status: 'unread'}).count();
         document.getElementById('unread-count').textContent = unread.total || 0;
       } catch(e) { 
-        console.error(e);
-        document.getElementById('news-count').textContent = 'Error';
-        alert('连接云数据库失败，请确保：\n1. 数据库集合已创建\n2. 网页安全域名已配置\n\n错误信息：' + e.message);
+        console.error('数据库错误:', e);
+        document.getElementById('news-count').textContent = '⚠️';
+        document.getElementById('msg-count').textContent = '⚠️';
+        document.getElementById('wechat-count').textContent = '⚠️';
+        document.getElementById('unread-count').textContent = '⚠️';
+        alert('云数据库连接失败：' + e.message + '\n\n请确保已在云开发控制台添加网页安全域名');
       }
     }
 
@@ -356,7 +357,7 @@
       const res = await db.collection('wechat_articles').orderBy('createTime', 'desc').limit(10).get();
       const tbody = document.getElementById('wechat-table');
       if (!res.data.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">暂无文章，点击上方"添加文章"</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">暂无文章，请先同步</td></tr>';
         return;
       }
       tbody.innerHTML = res.data.map(item => `
@@ -371,21 +372,15 @@
         </tr>
       `).join('');
     }
-    
-    // 删除公众号文章
-    async function deleteWechat(id) {
-      if (!confirm('确定删除？')) return;
-      await db.collection('wechat_articles').doc(id).remove();
-      loadWechat();
-    }
 
-    // 同步公众号文章（调用云函数）
+    // 同步公众号文章
     async function syncWechat() {
       const btn = event.target;
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同步中...';
       
       const statusEl = document.getElementById('sync-status');
+      statusEl.innerHTML = '<span class="text-gray-500">正在调用云函数...</span>';
       
       try {
         const res = await cld.callFunction({
@@ -397,8 +392,10 @@
         if (res.result && res.result.code === 0) {
           statusEl.innerHTML = '<span class="text-green-500">✓ 同步成功！共获取' + res.result.data.length + '篇文章</span>';
           loadWechat();
+        } else if (res.result) {
+          statusEl.innerHTML = '<span class="text-red-500">✗ 同步失败：' + res.result.msg + '</span>';
         } else {
-          statusEl.innerHTML = '<span class="text-red-500">✗ 同步失败：' + (res.result ? res.result.msg : '未知错误') + '</span>';
+          statusEl.innerHTML = '<span class="text-red-500">✗ 调用失败<br>错误：' + JSON.stringify(res) + '</span>';
         }
       } catch(e) {
         console.error(e);
@@ -407,6 +404,13 @@
       
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-sync mr-1"></i>同步公众号';
+    }
+
+    // 删除公众号文章
+    async function deleteWechat(id) {
+      if (!confirm('确定删除？')) return;
+      await db.collection('wechat_articles').doc(id).remove();
+      loadWechat();
     }
 
     // 显示公众号文章弹窗
@@ -444,7 +448,6 @@
         email: document.getElementById('setting-email').value
       };
       
-      // 保存到数据库
       const res = await db.collection('settings').doc('company_info').set({ data });
       alert('保存成功！');
     }
