@@ -88,7 +88,7 @@
         了解核心业务
       </a>
       <a href="#news" class="px-8 py-3 border border-white text-white font-medium rounded-lg hover:border-primary hover:text-primary transition-colors">
-        查看重大新闻
+        查看行业前沿
       </a>
     </div>
   </div>
@@ -390,65 +390,108 @@ form.onsubmit = async (e) => {
   setTimeout(() => tip.classList.add('hidden'), 3000);
 };
 
-// 5. 自动拉取公众号文章（从本地存储读取，带图片）
+// 5. 自动拉取公众号文章（从云数据库读取）
+// 引入云开发SDK
+var cloudDb = null;
+try {
+  cloudDb = cloud.init({ env: 'cloud1-9gokdyng87192870' });
+} catch(e) {
+  console.log('云SDK初始化失败:', e);
+}
+
 function loadWechatArticles() {
-  const newsList = document.getElementById('newsList');
+  var newsList = document.getElementById('newsList');
   
-  // 从本地存储读取数据
-  const data = localStorage.getItem('lv_lianhui_data');
-  let wechatArticles = [];
+  // 先显示加载中
+  newsList.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-primary text-2xl"></i><p class="text-gray-500 mt-2">正在加载...</p></div>';
+  
+  // 尝试从云数据库读取
+  if (cloudDb) {
+    try {
+      var db = cloudDb.database();
+      db.collection('wechat_articles').orderBy('createTime', 'desc').limit(10).get().then(function(res) {
+        if (res.data && res.data.length > 0) {
+          renderArticles(res.data, newsList);
+        } else {
+          showEmptyState(newsList);
+        }
+      }).catch(function(err) {
+        console.log('云数据库读取失败:', err);
+        // 尝试从本地存储读取作为备选
+        loadFromLocalStorage(newsList);
+      });
+    } catch(e) {
+      console.log('云数据库错误:', e);
+      loadFromLocalStorage(newsList);
+    }
+  } else {
+    // 云SDK未加载，从本地存储读取
+    loadFromLocalStorage(newsList);
+  }
+}
+
+function loadFromLocalStorage(newsList) {
+  var data = localStorage.getItem('lv_lianhui_data');
+  var wechatArticles = [];
   
   if (data) {
-    const parsed = JSON.parse(data);
+    var parsed = JSON.parse(data);
     wechatArticles = parsed.wechat || [];
   }
   
   if (wechatArticles.length > 0) {
-    let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
-    wechatArticles.forEach((item, index) => {
-      // 如果没有图片，使用占位图
-      const imgSrc = item.image || 'https://via.placeholder.com/400x200?text=绿链汇';
-      const digest = item.digest || '点击查看全文';
-      html += `
-        <a href="${item.url}" target="_blank" class="group block bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <div class="aspect-video overflow-hidden">
-            <img src="${imgSrc}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://via.placeholder.com/400x200?text=绿链汇'">
-          </div>
-          <div class="p-4">
-            <h3 class="font-bold text-lg text-gray-800 mb-2 line-clamp-2 group-hover:text-primary transition-colors">${item.title}</h3>
-            <p class="text-gray-500 text-sm line-clamp-2 mb-2">${digest}</p>
-            <div class="flex items-center justify-between text-xs text-gray-400">
-              <span><i class="far fa-clock mr-1"></i>${item.time}</span>
-              <span class="text-primary"><i class="fas fa-arrow-right mr-1"></i>阅读全文</span>
-            </div>
-          </div>
-        </a>
-      `;
-    });
-    html += '</div>';
-    html += `
-      <div class="mt-8 text-center">
-        <a href="#home" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-          <i class="fas fa-arrow-up mr-2"></i>返回首页顶部
-        </a>
-      </div>
-    `;
-    newsList.innerHTML = html;
+    renderArticles(wechatArticles, newsList);
   } else {
-    // 没有文章时显示默认提示
-    newsList.innerHTML = `
-      <div class="text-center py-12">
-        <i class="fas fa-newspaper text-6xl text-gray-300 mb-4"></i>
-        <p class="text-gray-500 mb-4">暂无文章发布</p>
-        <p class="text-gray-400 text-sm">请在管理后台添加公众号文章</p>
-      </div>
-      <div class="mt-4 text-center">
-        <a href="#home" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-          <i class="fas fa-arrow-up mr-2"></i>返回首页顶部
-        </a>
-      </div>
-    `;
+    showEmptyState(newsList);
   }
+}
+
+function renderArticles(articles, newsList) {
+  var html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+  articles.forEach(function(item, index) {
+    // 微信公众号图片需要通过代理，这里使用默认图片
+    // 实际使用时建议：1. 用其他图床 2. 手动上传图片链接
+    var imgSrc = '';
+    if (item.image && !item.image.includes('mmbiz.qpic.cn')) {
+      // 非微信公众号图片直接使用
+      imgSrc = item.image;
+    } else {
+      // 微信公众号图片或无图片，使用默认图
+      imgSrc = 'https://via.placeholder.com/400x250/00A86B/ffffff?text=' + encodeURIComponent(item.title.substring(0, 6));
+    }
+    var digest = item.digest || '点击查看全文';
+    var time = item.createTime ? new Date(item.createTime).toLocaleDateString() : (item.time || '');
+    
+    html += '<a href="' + item.url + '" target="_blank" class="group block bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">' +
+      '<div class="aspect-video overflow-hidden bg-gradient-to-br from-primary to-green-800 flex items-center justify-center">' +
+        '<span class="text-white text-center px-4 font-bold">' + item.title.substring(0, 15) + (item.title.length > 15 ? '...' : '') + '</span>' +
+      '</div>' +
+      '<div class="p-4">' +
+        '<h3 class="font-bold text-lg text-gray-800 mb-2 line-clamp-2 group-hover:text-primary transition-colors">' + item.title + '</h3>' +
+        '<p class="text-gray-500 text-sm line-clamp-2 mb-2">' + digest + '</p>' +
+        '<div class="flex items-center justify-between text-xs text-gray-400">' +
+          '<span><i class="far fa-clock mr-1"></i>' + time + '</span>' +
+          '<span class="text-primary"><i class="fas fa-arrow-right mr-1"></i>阅读全文</span>' +
+        '</div>' +
+      '</div>' +
+    '</a>';
+  });
+  html += '</div>';
+  html += '<div class="mt-8 text-center"><a href="#home" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"><i class="fas fa-arrow-up mr-2"></i>返回首页顶部</a></div>';
+  newsList.innerHTML = html;
+}
+
+function showEmptyState(newsList) {
+  newsList.innerHTML = '<div class="text-center py-12">' +
+    '<i class="fas fa-newspaper text-6xl text-gray-300 mb-4"></i>' +
+    '<p class="text-gray-500 mb-4">暂无文章发布</p>' +
+    '<p class="text-gray-400 text-sm">请在管理后台添加公众号文章</p>' +
+  '</div>' +
+  '<div class="mt-4 text-center">' +
+    '<a href="#home" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">' +
+      '<i class="fas fa-arrow-up mr-2"></i>返回首页顶部' +
+    '</a>' +
+  '</div>';
 }
 
 // 页面加载完成后自动拉取新闻
