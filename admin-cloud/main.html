@@ -8,14 +8,14 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root { --primary: #00A86B; }
-    .sidebar { width: 220px; }
-    .main-content { margin-left: 220px; }
-    .sidebar a { color: #1f2937; font-weight: 500; }
-    .sidebar a:hover { background: #bbf7d0; }
-    .sidebar .fas, .sidebar .fab { color: #15803d; }
+    。sidebar { width: 220px; }
+    。main-content { margin-left: 220px; }
+    。sidebar a { color: #1f2937; font-weight: 500; }
+    。sidebar a:hover { background: #bbf7d0; }
+    。sidebar .fas, .sidebar .fab { color: #15803d; }
     @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .main-content { margin-left: 0; }
+      。sidebar { display: none; }
+      。main-content { margin-left: 0; }
     }
   </style>
 </head>
@@ -131,7 +131,7 @@
           <button onclick="syncWechat()" class="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700">
             <i class="fas fa-sync mr-1"></i>一键同步
           </button>
-          <button onclick="showWechatModal()" class="bg-black text-black px-4 py-2 rounded hover:bg-gray-800">
+          <button onclick="showWechatModal()" class="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700">
             <i class="fas fa-plus mr-1"></i>手动添加
           </button>
         </div>
@@ -243,7 +243,7 @@
     });
 
     function showPage(page) {
-      document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
+      document。querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
       document.getElementById('page-' + page).classList.remove('hidden');
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('bg-green-300'));
       document.querySelector(`[data-page="${page}"]`).classList.add('bg-green-300');
