@@ -10,6 +10,9 @@
     :root { --primary: #00A86B; }
     .sidebar { width: 220px; }
     .main-content { margin-left: 220px; }
+    .sidebar a { color: #1f2937; font-weight: 500; }
+    .sidebar a:hover { background: #bbf7d0; }
+    .sidebar .fas, .sidebar .fab { color: #15803d; }
     @media (max-width: 768px) {
       .sidebar { display: none; }
       .main-content { margin-left: 0; }
@@ -19,24 +22,24 @@
 <body class="bg-gray-100">
 
   <!-- 侧边栏 -->
-  <aside class="sidebar fixed left-0 top-0 h-full bg-dark text-white p-4">
-    <div class="text-xl font-bold mb-6">
+  <aside class="sidebar fixed left-0 top-0 h-full bg-green-100 text-gray-800 p-4" style="border-right: 3px solid #00A86B;">
+    <div class="text-xl font-bold mb-6 text-green-800">
       <i class="fas fa-leaf text-primary"></i> 绿链汇后台
     </div>
     <nav class="space-y-1">
-      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-primary/20" data-page="dashboard">
-        <i class="fas fa-home w-5"></i> 控制台
+      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-green-200 text-gray-800" data-page="dashboard">
+        <i class="fas fa-home w-5 text-green-700"></i> 控制台
       </a>
-      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-primary/20" data-page="news">
-        <i class="fas fa-newspaper w-5"></i> 新闻管理
+      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-green-200 text-gray-800" data-page="news">
+        <i class="fas fa-newspaper w-5 text-green-700"></i> 新闻管理
       </a>
-      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-primary/20" data-page="messages">
-        <i class="fas fa-comments w-5"></i> 客户留言
+      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-green-200 text-gray-800" data-page="messages">
+        <i class="fas fa-comments w-5 text-green-700"></i> 客户留言
       </a>
-      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-primary/20" data-page="wechat">
-        <i class="fab fa-weixin w-5"></i> 公众号文章
+      <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-green-200 text-gray-800" data-page="wechat">
+        <i class="fab fa-weixin w-5 text-green-700"></i> 公众号文章
       </a>
-      <a href="#" onclick="logout()" class="block py-2 px-3 rounded hover:bg-red-500/20 text-red-400 mt-4">
+      <a href="#" onclick="logout()" class="block py-2 px-3 rounded hover:bg-red-100 text-red-600 mt-4">
         <i class="fas fa-sign-out-alt w-5"></i> 退出登录
       </a>
     </nav>
@@ -81,7 +84,7 @@
     <section id="page-news" class="page-section hidden">
       <div class="flex justify-between items-center mb-4">
         <h1 class="text-2xl font-bold">新闻管理</h1>
-        <button onclick="showNewsModal()" class="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90">
+        <button onclick="showNewsModal()" class="bg-primary text-black px-4 py-2 rounded hover:bg-primary/80">
           <i class="fas fa-plus mr-1"></i>添加新闻
         </button>
       </div>
@@ -124,11 +127,17 @@
     <section id="page-wechat" class="page-section hidden">
       <div class="flex justify-between items-center mb-4">
         <h1 class="text-2xl font-bold">公众号文章</h1>
-        <button onclick="showWechatModal()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-          <i class="fas fa-plus mr-1"></i>添加文章
-        </button>
+        <div class="space-x-2">
+          <button onclick="syncWechat()" class="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700">
+            <i class="fas fa-sync mr-1"></i>一键同步
+          </button>
+          <button onclick="showWechatModal()" class="bg-black text-black px-4 py-2 rounded hover:bg-gray-800">
+            <i class="fas fa-plus mr-1"></i>手动添加
+          </button>
+        </div>
       </div>
-      <p class="text-gray-500 text-sm mb-4">手动添加公众号文章链接到官网显示</p>
+      <p class="text-gray-500 text-sm mb-4">点击「一键同步」调用云函数获取公众号文章，或点击「手动添加」</p>
+      <div id="sync-status" class="mb-4 text-sm"></div>
       <div class="bg-white rounded-lg shadow overflow-hidden">
         <table class="w-full">
           <thead class="bg-gray-50">
@@ -147,21 +156,21 @@
   </main>
 
   <!-- 新闻弹窗 -->
-  <div id="news-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 w-full max-w-md">
-      <h2 class="text-lg font-bold mb-4">添加新闻</h2>
+  <div id="news-modal" class="fixed inset-0 bg-primary/30 hidden items-center justify-center z-50">
+    <div class="bg-green-50 rounded-lg p-6 w-full max-w-md border-2 border-primary">
+      <h2 class="text-lg font-bold mb-4 text-gray-800">添加新闻</h2>
       <form id="news-form" class="space-y-3">
         <div>
-          <label class="block text-sm mb-1">新闻标题 *</label>
-          <input type="text" id="news-title" class="w-full border rounded px-3 py-2" required>
+          <label class="block text-sm mb-1 text-gray-800">新闻标题 *</label>
+          <input type="text" id="news-title" class="w-full border rounded px-3 py-2 text-gray-800" required>
         </div>
         <div>
-          <label class="block text-sm mb-1">文章链接</label>
-          <input type="url" id="news-link" class="w-full border rounded px-3 py-2" placeholder="https://...">
+          <label class="block text-sm mb-1 text-gray-800">文章链接</label>
+          <input type="url" id="news-link" class="w-full border rounded px-3 py-2 text-gray-800" placeholder="https://...">
         </div>
         <div class="flex gap-2 justify-end pt-2">
-          <button type="button" onclick="hideNewsModal()" class="px-4 py-2 border rounded">取消</button>
-          <button type="submit" class="px-4 py-2 bg-primary text-white rounded">保存</button>
+          <button type="button" onclick="hideNewsModal()" class="px-4 py-2 border rounded bg-gray-600 text-white hover:bg-gray-700">取消</button>
+          <button type="submit" class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">保存</button>
         </div>
       </form>
     </div>
@@ -170,23 +179,26 @@
   <!-- 公众号文章弹窗 -->
   <div id="wechat-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 w-full max-w-md">
-      <h2 class="text-lg font-bold mb-4">添加公众号文章</h2>
+      <h2 class="text-lg font-bold mb-4 text-gray-800">添加公众号文章</h2>
       <form id="wechat-form" class="space-y-3">
         <div>
-          <label class="block text-sm mb-1">文章标题 *</label>
-          <input type="text" id="wechat-title" class="w-full border rounded px-3 py-2" required>
+          <label class="block text-sm mb-1 text-gray-800">文章标题 *</label>
+          <input type="text" id="wechat-title" class="w-full border rounded px-3 py-2 text-gray-800" required>
         </div>
         <div>
-          <label class="block text-sm mb-1">文章链接 *</label>
-          <input type="url" id="wechat-url" class="w-full border rounded px-3 py-2" placeholder="https://mp.weixin.qq.com/..." required>
+          <label class="block text-sm mb-1 text-gray-800">文章链接 *</label>
+          <input type="url" id="wechat-url" class="w-full border rounded px-3 py-2 text-gray-800" placeholder="https://mp.weixin.qq.com/..." required>
         </div>
         <div class="flex gap-2 justify-end pt-2">
-          <button type="button" onclick="hideWechatModal()" class="px-4 py-2 border rounded">取消</button>
-          <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded">保存</button>
+          <button type="button" onclick="hideWechatModal()" class="px-4 py-2 border rounded bg-gray-600 text-white hover:bg-gray-700">取消</button>
+          <button type="submit" class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">保存</button>
         </div>
       </form>
     </div>
   </div>
+
+  <!-- 引入微信云开发SDK -->
+  <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
 
   <script>
     // 检查登录状态
@@ -233,8 +245,8 @@
     function showPage(page) {
       document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
       document.getElementById('page-' + page).classList.remove('hidden');
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('bg-primary/20'));
-      document.querySelector(`[data-page="${page}"]`).classList.add('bg-primary/20');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('bg-green-300'));
+      document.querySelector(`[data-page="${page}"]`).classList.add('bg-green-300');
       
       if (page === 'dashboard') loadDashboard();
       if (page === 'news') loadNews();
@@ -390,6 +402,61 @@
       saveData(data);
       loadMessages();
       loadDashboard();
+    }
+
+    // 一键同步公众号文章（调用云函数）
+    function syncWechat() {
+      const statusEl = document.getElementById('sync-status');
+      const btn = event.target;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同步中...';
+      
+      statusEl.innerHTML = '<span class="text-gray-500">正在调用云函数，请稍候...</span>';
+      
+      // 尝试调用云函数
+      if (typeof cloud !== 'undefined') {
+        try {
+          const cld = cloud.init({ env: 'cloud1-9gokdyng87192870' });
+          cld.callFunction({
+            name: 'getWechatArticles',
+            success: function(res) {
+              console.log('云函数返回:', res);
+              if (res.result && res.result.code === 0) {
+                // 将云函数返回的文章同步到本地存储
+                const data = getData();
+                data.wechat = res.result.data.map(item => ({
+                  title: item.title,
+                  url: item.url,
+                  time: new Date().toLocaleDateString()
+                }));
+                saveData(data);
+                statusEl.innerHTML = '<span class="text-green-600">✓ 同步成功！共获取' + res.result.data.length + '篇文章</span>';
+                loadWechat();
+                loadDashboard();
+              } else {
+                statusEl.innerHTML = '<span class="text-red-500">✗ 同步失败：' + (res.result ? res.result.msg : '未知错误') + '</span>';
+              }
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
+            },
+            fail: function(err) {
+              console.error('调用失败:', err);
+              statusEl.innerHTML = '<span class="text-red-500">✗ 调用失败：' + err.message + '</span><br><span class="text-gray-500 text-sm">请确保云函数已部署，或使用手动添加</span>';
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
+            }
+          });
+        } catch(e) {
+          console.error(e);
+          statusEl.innerHTML = '<span class="text-red-500">✗ 初始化失败：' + e.message + '<br>请使用手动添加文章</span>';
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
+        }
+      } else {
+        statusEl.innerHTML = '<span class="text-red-500">✗ 云开发SDK未加载<br>请使用手动添加文章</span>';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
+      }
     }
 
     // 默认加载控制台
