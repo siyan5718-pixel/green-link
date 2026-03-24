@@ -144,7 +144,7 @@
             <tr>
               <th class="px-4 py-3 text-left text-sm">标题</th>
               <th class="px-4 py-3 text-left text-sm">链接</th>
-              <th class="px-4 py-3 text-left text-sm">添加时间</th>
+              <th class="px-4 py-3 text-left text-sm">时间</th>
               <th class="px-4 py-3 text-left text-sm">操作</th>
             </tr>
           </thead>
@@ -188,6 +188,15 @@
         <div>
           <label class="block text-sm mb-1 text-gray-800">文章链接 *</label>
           <input type="url" id="wechat-url" class="w-full border rounded px-3 py-2 text-gray-800" placeholder="https://mp.weixin.qq.com/..." required>
+        </div>
+        <div>
+          <label class="block text-sm mb-1 text-gray-800">封面图片 *</label>
+          <input type="url" id="wechat-image" class="w-full border rounded px-3 py-2 text-gray-800" placeholder="https://..." required>
+          <p class="text-xs text-gray-500 mt-1">输入图片网址，或使用下方示例图片链接</p>
+        </div>
+        <div>
+          <label class="block text-sm mb-1 text-gray-800">文章摘要</label>
+          <textarea id="wechat-digest" class="w-full border rounded px-3 py-2 text-gray-800" rows="2" placeholder="简要描述文章内容（可选）"></textarea>
         </div>
         <div class="flex gap-2 justify-end pt-2">
           <button type="button" onclick="hideWechatModal()" class="px-4 py-2 border rounded bg-gray-600 text-white hover:bg-gray-700">取消</button>
@@ -309,23 +318,28 @@
 
     // 加载公众号文章
     function loadWechat() {
-      const data = getData();
-      const tbody = document.getElementById('wechat-table');
+      var data = getData();
+      var tbody = document.getElementById('wechat-table');
       if (!data.wechat.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">暂无文章，点击上方添加</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">暂无文章，点击上方添加</td></tr>';
         return;
       }
-      tbody.innerHTML = data.wechat.map((item, i) => `
-        <tr class="border-t">
-          <td class="px-4 py-3">${item.title}</td>
-          <td class="px-4 py-3 text-blue-500 text-sm truncate max-w-xs">${item.url}</td>
-          <td class="px-4 py-3 text-sm">${item.time}</td>
-          <td class="px-4 py-3">
-            <a href="${item.url}" target="_blank" class="text-blue-500 text-sm mr-2">查看</a>
-            <button onclick="deleteWechat(${i})" class="text-red-500 text-sm">删除</button>
-          </td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = data.wechat.map(function(item, i) {
+        return '<tr class="border-t">' +
+          '<td class="px-4 py-3">' +
+            '<div class="flex items-center gap-3">' +
+              '<img src="' + (item.image || 'https://via.placeholder.com/60x40?text=无图') + '" class="w-16 h-10 object-cover rounded" onerror="this.src=\'https://via.placeholder.com/60x40?text=无图\'">' +
+              '<span class="font-medium">' + item.title + '</span>' +
+            '</div>' +
+          '</td>' +
+          '<td class="px-4 py-3 text-blue-500 text-sm truncate max-w-xs">' + item.url + '</td>' +
+          '<td class="px-4 py-3 text-sm">' + item.time + '</td>' +
+          '<td class="px-4 py-3">' +
+            '<a href="' + item.url + '" target="_blank" class="text-blue-500 text-sm mr-2">查看</a>' +
+            '<button onclick="deleteWechat(' + i + ')" class="text-red-500 text-sm">删除</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
     }
 
     // 添加新闻
@@ -374,14 +388,21 @@
     
     document.getElementById('wechat-form').addEventListener('submit', function(e) {
       e.preventDefault();
-      const data = getData();
+      var data = getData();
       data.wechat.unshift({
         title: document.getElementById('wechat-title').value,
         url: document.getElementById('wechat-url').value,
+        image: document.getElementById('wechat-image').value,
+        digest: document.getElementById('wechat-digest').value,
         time: new Date().toLocaleDateString()
       });
       saveData(data);
       hideWechatModal();
+      // 清空表单
+      document.getElementById('wechat-title').value = '';
+      document.getElementById('wechat-url').value = '';
+      document.getElementById('wechat-image').value = '';
+      document.getElementById('wechat-digest').value = '';
       loadWechat();
       loadDashboard();
       alert('添加成功');
