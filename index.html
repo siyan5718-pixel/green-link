@@ -88,7 +88,7 @@
         了解核心业务
       </a>
       <a href="#news" class="px-8 py-3 border border-white text-white font-medium rounded-lg hover:border-primary hover:text-primary transition-colors">
-        查看行业前沿
+        查看重大新闻
       </a>
     </div>
   </div>
@@ -390,7 +390,7 @@ form.onsubmit = async (e) => {
   setTimeout(() => tip.classList.add('hidden'), 3000);
 };
 
-// 5. 自动拉取公众号文章（从本地存储读取）
+// 5. 自动拉取公众号文章（从本地存储读取，带图片）
 function loadWechatArticles() {
   const newsList = document.getElementById('newsList');
   
@@ -404,18 +404,28 @@ function loadWechatArticles() {
   }
   
   if (wechatArticles.length > 0) {
-    let html = '<ul class="space-y-4 text-lg">';
+    let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
     wechatArticles.forEach((item, index) => {
+      // 如果没有图片，使用占位图
+      const imgSrc = item.image || 'https://via.placeholder.com/400x200?text=绿链汇';
+      const digest = item.digest || '点击查看全文';
       html += `
-        <li>
-          <a href="${item.url}" target="_blank" class="text-primary hover:underline block">
-            ${index + 1}. ${item.title}
-          </a>
-          <span class="text-xs text-gray-400">添加时间：${item.time}</span>
-        </li>
+        <a href="${item.url}" target="_blank" class="group block bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div class="aspect-video overflow-hidden">
+            <img src="${imgSrc}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://via.placeholder.com/400x200?text=绿链汇'">
+          </div>
+          <div class="p-4">
+            <h3 class="font-bold text-lg text-gray-800 mb-2 line-clamp-2 group-hover:text-primary transition-colors">${item.title}</h3>
+            <p class="text-gray-500 text-sm line-clamp-2 mb-2">${digest}</p>
+            <div class="flex items-center justify-between text-xs text-gray-400">
+              <span><i class="far fa-clock mr-1"></i>${item.time}</span>
+              <span class="text-primary"><i class="fas fa-arrow-right mr-1"></i>阅读全文</span>
+            </div>
+          </div>
+        </a>
       `;
     });
-    html += '</ul>';
+    html += '</div>';
     html += `
       <div class="mt-8 text-center">
         <a href="#home" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
@@ -425,33 +435,19 @@ function loadWechatArticles() {
     `;
     newsList.innerHTML = html;
   } else {
-    // 没有文章时显示默认数据
-    const demoArticles = [
-      {title: '绿链汇与某大型物流企业达成战略合作', url: 'https://mp.weixin.qq.com/', time: '2025-01-15'},
-      {title: '新能源运力解决方案发布会在沪举行', url: 'https://mp.weixin.qq.com/', time: '2025-01-10'}
-    ];
-    
-    let html = '<ul class="space-y-4 text-lg">';
-    demoArticles.forEach((item, index) => {
-      html += `
-        <li>
-          <a href="${item.url}" target="_blank" class="text-primary hover:underline block">
-            ${index + 1}. ${item.title}
-          </a>
-          <span class="text-xs text-gray-400">发布时间：${item.time}</span>
-        </li>
-      `;
-    });
-    html += '</ul>';
-    html += `
-      <p class="text-center text-gray-400 text-sm mt-4">暂无最新动态</p>
+    // 没有文章时显示默认提示
+    newsList.innerHTML = `
+      <div class="text-center py-12">
+        <i class="fas fa-newspaper text-6xl text-gray-300 mb-4"></i>
+        <p class="text-gray-500 mb-4">暂无文章发布</p>
+        <p class="text-gray-400 text-sm">请在管理后台添加公众号文章</p>
+      </div>
       <div class="mt-4 text-center">
         <a href="#home" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
           <i class="fas fa-arrow-up mr-2"></i>返回首页顶部
         </a>
       </div>
     `;
-    newsList.innerHTML = html;
   }
 }
 
