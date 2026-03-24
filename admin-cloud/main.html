@@ -6,6 +6,9 @@
   <title>绿链汇管理后台</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- 引入微信云开发SDK -->
+  <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
+  <script src="https://imgcache.qq.com/qcloud/cloudbase_js/0.9.5/cloudbase.js"></script>
   <style>
     :root { --primary: #00A86B; }
     .sidebar { width: 220px; }
@@ -14,17 +17,26 @@
     .sidebar a:hover { background: #bbf7d0; }
     .sidebar .fas, .sidebar .fab { color: #15803d; }
     @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .main-content { margin-left: 0; }
+      .sidebar { display: none; width: 100%; }
+      .sidebar.mobile-open { display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+      .main-content { margin-left: 0; padding-top: 60px; }
     }
   </style>
 </head>
 <body class="bg-gray-100">
 
+  <!-- 移动端菜单按钮 -->
+  <button id="mobile-menu-btn" onclick="toggleSidebar()" class="md:hidden fixed top-4 left-4 z-50 bg-primary text-white p-2 rounded-lg shadow-lg">
+    <i class="fas fa-bars"></i>
+  </button>
+
   <!-- 侧边栏 -->
-  <aside class="sidebar fixed left-0 top-0 h-full bg-green-100 text-gray-800 p-4" style="border-right: 3px solid #00A86B;">
-    <div class="text-xl font-bold mb-6 text-green-800">
-      <i class="fas fa-leaf text-primary"></i> 绿链汇后台
+  <aside id="sidebar" class="sidebar fixed left-0 top-0 h-full bg-green-100 text-gray-800 p-4" style="border-right: 3px solid #00A86B; z-index: 40;">
+    <div class="text-xl font-bold mb-6 text-green-800 flex items-center justify-between">
+      <div><i class="fas fa-leaf text-primary"></i> 绿链汇后台</div>
+      <button onclick="toggleSidebar()" class="md:hidden text-gray-500">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
     <nav class="space-y-1">
       <a href="#" class="nav-item block py-2 px-3 rounded hover:bg-green-200 text-gray-800" data-page="dashboard">
@@ -88,6 +100,7 @@
           <i class="fas fa-plus mr-1"></i>添加新闻
         </button>
       </div>
+      <div id="news-loading" class="text-center py-4 text-gray-500">加载中...</div>
       <div class="bg-white rounded-lg shadow overflow-hidden">
         <table class="w-full">
           <thead class="bg-gray-50">
@@ -106,6 +119,7 @@
     <!-- 留言管理 -->
     <section id="page-messages" class="page-section hidden">
       <h1 class="text-2xl font-bold mb-4">客户留言</h1>
+      <div id="messages-loading" class="text-center py-4 text-gray-500">加载中...</div>
       <div class="bg-white rounded-lg shadow overflow-hidden">
         <table class="w-full">
           <thead class="bg-gray-50">
@@ -127,17 +141,12 @@
     <section id="page-wechat" class="page-section hidden">
       <div class="flex justify-between items-center mb-4">
         <h1 class="text-2xl font-bold">公众号文章</h1>
-        <div class="space-x-2">
-          <button onclick="syncWechat()" class="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700">
-            <i class="fas fa-sync mr-1"></i>一键同步
-          </button>
-          <button onclick="showWechatModal()" class="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700">
-            <i class="fas fa-plus mr-1"></i>手动添加
-          </button>
-        </div>
+        <button onclick="showWechatModal()" class="bg-black text-black px-4 py-2 rounded hover:bg-gray-800">
+          <i class="fas fa-plus mr-1"></i>手动添加
+        </button>
       </div>
-      <p class="text-gray-500 text-sm mb-4">点击「一键同步」调用云函数获取公众号文章，或点击「手动添加」</p>
-      <div id="sync-status" class="mb-4 text-sm"></div>
+      <p class="text-gray-500 text-sm mb-4">手动添加公众号文章链接到官网显示</p>
+      <div id="wechat-loading" class="text-center py-4 text-gray-500">加载中...</div>
       <div class="bg-white rounded-lg shadow overflow-hidden">
         <table class="w-full">
           <thead class="bg-gray-50">
@@ -190,9 +199,9 @@
           <input type="url" id="wechat-url" class="w-full border rounded px-3 py-2 text-gray-800" placeholder="https://mp.weixin.qq.com/..." required>
         </div>
         <div>
-          <label class="block text-sm mb-1 text-gray-800">封面图片 *</label>
-          <input type="url" id="wechat-image" class="w-full border rounded px-3 py-2 text-gray-800" placeholder="https://..." required>
-          <p class="text-xs text-gray-500 mt-1">输入图片网址，或使用下方示例图片链接</p>
+          <label class="block text-sm mb-1 text-gray-800">封面图片</label>
+          <input type="url" id="wechat-image" class="w-full border rounded px-3 py-2 text-gray-800" placeholder="https://...">
+          <p class="text-xs text-gray-500 mt-1">⚠️ 微信公众号图片无法显示，建议使用其他图床（如 sm.ms、imgchr.com）或截图后上传</p>
         </div>
         <div>
           <label class="block text-sm mb-1 text-gray-800">文章摘要</label>
@@ -206,11 +215,20 @@
     </div>
   </div>
 
-  <!-- 引入微信云开发SDK -->
-  <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
-  <script src="https://imgcache.qq.com/qcloud/cloudbase_js/0.9.5/cloudbase.js"></script>
-
   <script>
+    // 云开发配置
+    const ENV_ID = 'cloud1-9gokdyng87192870';
+    let db, app;
+
+    // 初始化云数据库
+    try {
+      app = cloud.init({ env: ENV_ID });
+      db = app.database();
+      console.log('云数据库初始化成功');
+    } catch(e) {
+      console.error('云数据库初始化失败:', e);
+    }
+
     // 检查登录状态
     if (localStorage.getItem('admin_logged_in') !== 'true') {
       window.location.href = 'login.html';
@@ -224,39 +242,32 @@
       }
     }
 
-    // 本地存储数据管理
-    const STORAGE_KEY = 'lv_lianhui_data';
-    
-    function getData() {
-      const data = localStorage.getItem(STORAGE_KEY);
-      if (data) {
-        return JSON.parse(data);
+    // 移动端菜单切换
+    function toggleSidebar() {
+      var sidebar = document.getElementById('sidebar');
+      if (window.innerWidth <= 768) {
+        if (sidebar.classList.contains('mobile-open')) {
+          sidebar.classList.remove('mobile-open');
+        } else {
+          sidebar.classList.add('mobile-open');
+        }
       }
-      return {
-        news: [],
-        messages: [],
-        wechat: []
-      };
-    }
-    
-    function saveData(data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
     // 导航
-    document.querySelectorAll('.nav-item').forEach(item => {
-      item.addEventListener('click', (e) => {
+    document.querySelectorAll('.nav-item').forEach(function(item) {
+      item.addEventListener('click', function(e) {
         e.preventDefault();
-        const page = item.dataset.page;
+        var page = item.dataset.page;
         showPage(page);
       });
     });
 
     function showPage(page) {
-      document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
+      document.querySelectorAll('.page-section').forEach(function(s) { s.classList.add('hidden'); });
       document.getElementById('page-' + page).classList.remove('hidden');
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('bg-green-300'));
-      document.querySelector(`[data-page="${page}"]`).classList.add('bg-green-300');
+      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('bg-green-300'); });
+      document.querySelector('[data-page="' + page + '"]').classList.add('bg-green-300');
       
       if (page === 'dashboard') loadDashboard();
       if (page === 'news') loadNews();
@@ -266,80 +277,59 @@
 
     // 加载控制台
     function loadDashboard() {
-      const data = getData();
-      document.getElementById('news-count').textContent = data.news.length;
-      document.getElementById('msg-count').textContent = data.messages.length;
-      document.getElementById('wechat-count').textContent = data.wechat.length;
-      const unread = data.messages.filter(m => m.status === 'unread').length;
-      document.getElementById('unread-count').textContent = unread;
+      if (!db) {
+        document.getElementById('news-count').textContent = '⚠️';
+        document.getElementById('msg-count').textContent = '⚠️';
+        document.getElementById('wechat-count').textContent = '⚠️';
+        document.getElementById('unread-count').textContent = '⚠️';
+        return;
+      }
+      
+      Promise.all([
+        db.collection('news').count(),
+        db.collection('messages').count(),
+        db.collection('wechat_articles').count()
+      ]).then(function(results) {
+        document.getElementById('news-count').textContent = results[0].total || 0;
+        document.getElementById('msg-count').textContent = results[1].total || 0;
+        document.getElementById('wechat-count').textContent = results[2].total || 0;
+        
+        db.collection('messages').where({status: 'unread'}).count().then(function(res) {
+          document.getElementById('unread-count').textContent = res.total || 0;
+        }).catch(function() {});
+      }).catch(function(e) {
+        console.error('加载失败:', e);
+        document.getElementById('news-count').textContent = 'Error';
+      });
     }
 
     // 加载新闻
     function loadNews() {
-      const data = getData();
-      const tbody = document.getElementById('news-table');
-      if (!data.news.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">暂无新闻，点击上方添加</td></tr>';
+      if (!db) {
+        document.getElementById('news-table').innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-red-500">云数据库未连接</td></tr>';
         return;
       }
-      tbody.innerHTML = data.news.map((item, i) => `
-        <tr class="border-t">
-          <td class="px-4 py-3">${item.title}</td>
-          <td class="px-4 py-3 text-sm text-blue-500 truncate max-w-xs">${item.link || '-'}</td>
-          <td class="px-4 py-3 text-sm">${item.time}</td>
-          <td class="px-4 py-3">
-            <button onclick="deleteNews(${i})" class="text-red-500 text-sm">删除</button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    // 加载留言
-    function loadMessages() {
-      const data = getData();
-      const tbody = document.getElementById('messages-table');
-      if (!data.messages.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">暂无留言</td></tr>';
-        return;
-      }
-      tbody.innerHTML = data.messages.map((item, i) => `
-        <tr class="border-t">
-          <td class="px-4 py-3">${item.name}</td>
-          <td class="px-4 py-3">${item.phone}</td>
-          <td class="px-4 py-3">${item.company || '-'}</td>
-          <td class="px-4 py-3 max-w-xs truncate">${item.message}</td>
-          <td class="px-4 py-3 text-sm">${item.time}</td>
-          <td class="px-4 py-3">
-            <button onclick="deleteMessage(${i})" class="text-red-500 text-sm">删除</button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    // 加载公众号文章
-    function loadWechat() {
-      var data = getData();
-      var tbody = document.getElementById('wechat-table');
-      if (!data.wechat.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">暂无文章，点击上方添加</td></tr>';
-        return;
-      }
-      tbody.innerHTML = data.wechat.map(function(item, i) {
-        return '<tr class="border-t">' +
-          '<td class="px-4 py-3">' +
-            '<div class="flex items-center gap-3">' +
-              '<img src="' + (item.image || 'https://via.placeholder.com/60x40?text=无图') + '" class="w-16 h-10 object-cover rounded" onerror="this.src=\'https://via.placeholder.com/60x40?text=无图\'">' +
-              '<span class="font-medium">' + item.title + '</span>' +
-            '</div>' +
-          '</td>' +
-          '<td class="px-4 py-3 text-blue-500 text-sm truncate max-w-xs">' + item.url + '</td>' +
-          '<td class="px-4 py-3 text-sm">' + item.time + '</td>' +
-          '<td class="px-4 py-3">' +
-            '<a href="' + item.url + '" target="_blank" class="text-blue-500 text-sm mr-2">查看</a>' +
-            '<button onclick="deleteWechat(' + i + ')" class="text-red-500 text-sm">删除</button>' +
-          '</td>' +
-        '</tr>';
-      }).join('');
+      
+      document.getElementById('news-loading').style.display = 'block';
+      db.collection('news').orderBy('createTime', 'desc').get().then(function(res) {
+        document.getElementById('news-loading').style.display = 'none';
+        var tbody = document.getElementById('news-table');
+        if (!res.data || res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">暂无新闻，点击上方添加</td></tr>';
+          return;
+        }
+        tbody.innerHTML = res.data.map(function(item, i) {
+          return '<tr class="border-t">' +
+            '<td class="px-4 py-3">' + item.title + '</td>' +
+            '<td class="px-4 py-3 text-sm text-blue-500 truncate max-w-xs">' + (item.link || '-') + '</td>' +
+            '<td class="px-4 py-3 text-sm">' + (item.publishTime || '-') + '</td>' +
+            '<td class="px-4 py-3"><button onclick="deleteNews(\'' + item._id + '\')" class="text-red-500 text-sm">删除</button></td>' +
+          '</tr>';
+        }).join('');
+      }).catch(function(e) {
+        document.getElementById('news-loading').style.display = 'none';
+        document.getElementById('news-table').innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-red-500">加载失败: ' + e.message + '</td></tr>';
+      });
     }
 
     // 添加新闻
@@ -354,26 +344,105 @@
     
     document.getElementById('news-form').addEventListener('submit', function(e) {
       e.preventDefault();
-      const data = getData();
-      data.news.unshift({
-        title: document.getElementById('news-title').value,
-        link: document.getElementById('news-link').value,
-        time: new Date().toLocaleDateString()
+      if (!db) { alert('云数据库未连接'); return; }
+      
+      db.collection('news').add({
+        data: {
+          title: document.getElementById('news-title').value,
+          link: document.getElementById('news-link').value,
+          publishTime: new Date().toLocaleDateString(),
+          createTime: db.serverDate()
+        }
+      }).then(function() {
+        hideNewsModal();
+        document.getElementById('news-title').value = '';
+        document.getElementById('news-link').value = '';
+        loadNews();
+        loadDashboard();
+        alert('添加成功');
+      }).catch(function(e) {
+        alert('添加失败: ' + e.message);
       });
-      saveData(data);
-      hideNewsModal();
-      loadNews();
-      loadDashboard();
-      alert('添加成功');
     });
 
-    function deleteNews(i) {
+    function deleteNews(id) {
       if (!confirm('确定删除？')) return;
-      const data = getData();
-      data.news.splice(i, 1);
-      saveData(data);
-      loadNews();
-      loadDashboard();
+      db.collection('news').doc(id).remove().then(function() {
+        loadNews();
+        loadDashboard();
+      }).catch(function(e) {
+        alert('删除失败: ' + e.message);
+      });
+    }
+
+    // 加载留言
+    function loadMessages() {
+      if (!db) {
+        document.getElementById('messages-table').innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-red-500">云数据库未连接</td></tr>';
+        return;
+      }
+      
+      document.getElementById('messages-loading').style.display = 'block';
+      db.collection('messages').orderBy('createTime', 'desc').get().then(function(res) {
+        document.getElementById('messages-loading').style.display = 'none';
+        var tbody = document.getElementById('messages-table');
+        if (!res.data || res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">暂无留言</td></tr>';
+          return;
+        }
+        tbody.innerHTML = res.data.map(function(item) {
+          return '<tr class="border-t">' +
+            '<td class="px-4 py-3">' + (item.name || '-') + '</td>' +
+            '<td class="px-4 py-3">' + (item.phone || '-') + '</td>' +
+            '<td class="px-4 py-3">' + (item.company || '-') + '</td>' +
+            '<td class="px-4 py-3 max-w-xs truncate">' + (item.message || '-') + '</td>' +
+            '<td class="px-4 py-3 text-sm">' + (item.createTime ? new Date(item.createTime).toLocaleString() : '-') + '</td>' +
+            '<td class="px-4 py-3"><button onclick="deleteMessage(\'' + item._id + '\')" class="text-red-500 text-sm">删除</button></td>' +
+          '</tr>';
+        }).join('');
+      }).catch(function(e) {
+        document.getElementById('messages-loading').style.display = 'none';
+      });
+    }
+
+    function deleteMessage(id) {
+      if (!confirm('确定删除？')) return;
+      db.collection('messages').doc(id).remove().then(function() {
+        loadMessages();
+        loadDashboard();
+      }).catch(function(e) {
+        alert('删除失败: ' + e.message);
+      });
+    }
+
+    // 加载公众号文章
+    function loadWechat() {
+      if (!db) {
+        document.getElementById('wechat-table').innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-red-500">云数据库未连接</td></tr>';
+        return;
+      }
+      
+      document.getElementById('wechat-loading').style.display = 'block';
+      db.collection('wechat_articles').orderBy('createTime', 'desc').get().then(function(res) {
+        document.getElementById('wechat-loading').style.display = 'none';
+        var tbody = document.getElementById('wechat-table');
+        if (!res.data || res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">暂无文章，点击上方添加</td></tr>';
+          return;
+        }
+        tbody.innerHTML = res.data.map(function(item) {
+          var imgSrc = item.image || 'https://via.placeholder.com/60x40?text=无图';
+          return '<tr class="border-t">' +
+            '<td class="px-4 py-3"><div class="flex items-center gap-3"><img src="' + imgSrc + '" class="w-16 h-10 object-cover rounded"><span class="font-medium">' + item.title + '</span></div></td>' +
+            '<td class="px-4 py-3 text-blue-500 text-sm truncate max-w-xs">' + (item.url || '-') + '</td>' +
+            '<td class="px-4 py-3 text-sm">' + (item.createTime ? new Date(item.createTime).toLocaleDateString() : '-') + '</td>' +
+            '<td class="px-4 py-3"><a href="' + (item.url || '#') + '" target="_blank" class="text-blue-500 text-sm mr-2">查看</a><button onclick="deleteWechat(\'' + item._id + '\')" class="text-red-500 text-sm">删除</button></td>' +
+          '</tr>';
+        }).join('');
+      }).catch(function(e) {
+        document.getElementById('wechat-loading').style.display = 'none';
+        document.getElementById('wechat-table').innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-red-500">加载失败: ' + e.message + '</td></tr>';
+      });
     }
 
     // 添加公众号文章
@@ -388,98 +457,39 @@
     
     document.getElementById('wechat-form').addEventListener('submit', function(e) {
       e.preventDefault();
-      var data = getData();
-      data.wechat.unshift({
-        title: document.getElementById('wechat-title').value,
-        url: document.getElementById('wechat-url').value,
-        image: document.getElementById('wechat-image').value,
-        digest: document.getElementById('wechat-digest').value,
-        time: new Date().toLocaleDateString()
+      if (!db) { alert('云数据库未连接'); return; }
+      
+      db.collection('wechat_articles').add({
+        data: {
+          title: document.getElementById('wechat-title').value,
+          url: document.getElementById('wechat-url').value,
+          image: document.getElementById('wechat-image').value,
+          digest: document.getElementById('wechat-digest').value,
+          source: '手动添加',
+          createTime: db.serverDate()
+        }
+      }).then(function() {
+        hideWechatModal();
+        document.getElementById('wechat-title').value = '';
+        document.getElementById('wechat-url').value = '';
+        document.getElementById('wechat-image').value = '';
+        document.getElementById('wechat-digest').value = '';
+        loadWechat();
+        loadDashboard();
+        alert('添加成功');
+      }).catch(function(e) {
+        alert('添加失败: ' + e.message);
       });
-      saveData(data);
-      hideWechatModal();
-      // 清空表单
-      document.getElementById('wechat-title').value = '';
-      document.getElementById('wechat-url').value = '';
-      document.getElementById('wechat-image').value = '';
-      document.getElementById('wechat-digest').value = '';
-      loadWechat();
-      loadDashboard();
-      alert('添加成功');
     });
 
-    function deleteWechat(i) {
+    function deleteWechat(id) {
       if (!confirm('确定删除？')) return;
-      const data = getData();
-      data.wechat.splice(i, 1);
-      saveData(data);
-      loadWechat();
-      loadDashboard();
-    }
-
-    function deleteMessage(i) {
-      if (!confirm('确定删除？')) return;
-      const data = getData();
-      data.messages.splice(i, 1);
-      saveData(data);
-      loadMessages();
-      loadDashboard();
-    }
-
-    // 一键同步公众号文章（调用云函数）
-    function syncWechat() {
-      const statusEl = document.getElementById('sync-status');
-      const btn = event.target;
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同步中...';
-      
-      statusEl.innerHTML = '<span class="text-gray-500">正在调用云函数，请稍候...</span>';
-      
-      // 使用云开发SDK调用云函数
-      try {
-        var app = cloud.init({
-          env: 'cloud1-9gokdyng87192870'
-        });
-        var db = app.database();
-        
-        // 调用云函数
-        app.callFunction({
-          name: 'getWechatArticles',
-          success: function(res) {
-            console.log('云函数返回:', res);
-            if (res.result && res.result.code === 0) {
-              // 将云函数返回的文章同步到本地存储
-              var data = getData();
-              data.wechat = res.result.data.map(function(item) {
-                return {
-                  title: item.title,
-                  url: item.url,
-                  time: new Date().toLocaleDateString()
-                };
-              });
-              saveData(data);
-              statusEl.innerHTML = '<span class="text-green-600">✓ 同步成功！共获取' + res.result.data.length + '篇文章</span>';
-              loadWechat();
-              loadDashboard();
-            } else {
-              statusEl.innerHTML = '<span class="text-red-500">✗ 同步失败：' + (res.result ? res.result.msg : '未知错误') + '</span>';
-            }
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
-          },
-          fail: function(err) {
-            console.error('调用失败:', err);
-            statusEl.innerHTML = '<span class="text-red-500">✗ 调用失败：' + err.message + '</span><br><span class="text-gray-500 text-sm">请确保云函数已部署，或使用手动添加</span>';
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
-          }
-        });
-      } catch(e) {
-        console.error(e);
-        statusEl.innerHTML = '<span class="text-red-500">✗ 初始化失败：' + e.message + '<br>请使用手动添加文章</span>';
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-sync mr-1"></i>一键同步';
-      }
+      db.collection('wechat_articles').doc(id).remove().then(function() {
+        loadWechat();
+        loadDashboard();
+      }).catch(function(e) {
+        alert('删除失败: ' + e.message);
+      });
     }
 
     // 默认加载控制台
