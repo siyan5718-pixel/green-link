@@ -1,0 +1,22 @@
+{
+  "name": "getWechatArticles",
+  "version": "1.0.0",
+  "description": "获取公众号文章并自动同步",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.4",
+    "request-promise": "^4.2.6"
+  },
+  "config": {
+    "trigger": {
+      "name": "dailySync",
+      "type": "timer",
+      "config": "0 0 8 * * * *"
+    }
+  }
+}
