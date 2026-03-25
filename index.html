@@ -10,8 +10,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- 引入动画库 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-  <!-- 引入微信云开发SDK -->
-  <script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
+  <!-- 引入文章数据 -->
+  <script src="articles/data.js"></script>
   <!-- 自定义Tailwind配置 -->
   <script>
     tailwind.config = {
@@ -390,57 +390,12 @@ form.onsubmit = async (e) => {
   setTimeout(() => tip.classList.add('hidden'), 3000);
 };
 
-// 5. 自动拉取公众号文章（从云数据库读取）
-// 引入云开发SDK
-var cloudDb = null;
-try {
-  cloudDb = cloud.init({ env: 'cloud1-9gokdyng87192870' });
-} catch(e) {
-  console.log('云SDK初始化失败:', e);
-}
-
+// 5. 加载公众号文章（从本地 articles/data.js 读取）
 function loadWechatArticles() {
   var newsList = document.getElementById('newsList');
   
-  // 先显示加载中
-  newsList.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-primary text-2xl"></i><p class="text-gray-500 mt-2">正在加载...</p></div>';
-  
-  // 尝试从云数据库读取
-  if (cloudDb) {
-    try {
-      var db = cloudDb.database();
-      db.collection('wechat_articles').orderBy('createTime', 'desc').limit(10).get().then(function(res) {
-        if (res.data && res.data.length > 0) {
-          renderArticles(res.data, newsList);
-        } else {
-          showEmptyState(newsList);
-        }
-      }).catch(function(err) {
-        console.log('云数据库读取失败:', err);
-        // 尝试从本地存储读取作为备选
-        loadFromLocalStorage(newsList);
-      });
-    } catch(e) {
-      console.log('云数据库错误:', e);
-      loadFromLocalStorage(newsList);
-    }
-  } else {
-    // 云SDK未加载，从本地存储读取
-    loadFromLocalStorage(newsList);
-  }
-}
-
-function loadFromLocalStorage(newsList) {
-  var data = localStorage.getItem('lv_lianhui_admin_data');
-  var wechatArticles = [];
-  
-  if (data) {
-    var parsed = JSON.parse(data);
-    wechatArticles = parsed.wechat || [];
-  }
-  
-  if (wechatArticles.length > 0) {
-    renderArticles(wechatArticles, newsList);
+  if (typeof ARTICLES !== 'undefined' && ARTICLES.length > 0) {
+    renderArticles(ARTICLES, newsList);
   } else {
     showEmptyState(newsList);
   }
@@ -449,23 +404,24 @@ function loadFromLocalStorage(newsList) {
 function renderArticles(articles, newsList) {
   var html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
   articles.forEach(function(item, index) {
-    // 微信公众号图片需要通过代理，这里使用默认图片
-    // 实际使用时建议：1. 用其他图床 2. 手动上传图片链接
-    var imgSrc = '';
-    if (item.image && !item.image.includes('mmbiz.qpic.cn')) {
-      // 非微信公众号图片直接使用
-      imgSrc = item.image;
-    } else {
-      // 微信公众号图片或无图片，使用默认图
-      imgSrc = 'https://via.placeholder.com/400x250/00A86B/ffffff?text=' + encodeURIComponent(item.title.substring(0, 6));
-    }
     var digest = item.digest || '点击查看全文';
-    var time = item.createTime ? new Date(item.createTime).toLocaleDateString() : (item.time || '');
+    var time = item.date || '';
+    var image = item.image || '';
+    
+    // 图片容器：统一高度，图片居中裁剪显示
+    var imageHtml = '';
+    if (image) {
+      imageHtml = '<div class="aspect-video overflow-hidden bg-gray-100">' +
+        '<img src="' + image + '" alt="' + item.title.substring(0, 20) + '" class="w-full h-full object-cover" loading="lazy">' +
+      '</div>';
+    } else {
+      imageHtml = '<div class="aspect-video bg-gradient-to-br from-primary to-green-700 flex items-center justify-center">' +
+        '<span class="text-white text-center px-4 font-bold text-lg">' + item.title.substring(0, 12) + (item.title.length > 12 ? '...' : '') + '</span>' +
+      '</div>';
+    }
     
     html += '<a href="' + item.url + '" target="_blank" class="group block bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">' +
-      '<div class="aspect-video overflow-hidden bg-gradient-to-br from-primary to-green-800 flex items-center justify-center">' +
-        '<span class="text-white text-center px-4 font-bold">' + item.title.substring(0, 15) + (item.title.length > 15 ? '...' : '') + '</span>' +
-      '</div>' +
+      imageHtml +
       '<div class="p-4">' +
         '<h3 class="font-bold text-lg text-gray-800 mb-2 line-clamp-2 group-hover:text-primary transition-colors">' + item.title + '</h3>' +
         '<p class="text-gray-500 text-sm line-clamp-2 mb-2">' + digest + '</p>' +
@@ -485,7 +441,7 @@ function showEmptyState(newsList) {
   newsList.innerHTML = '<div class="text-center py-12">' +
     '<i class="fas fa-newspaper text-6xl text-gray-300 mb-4"></i>' +
     '<p class="text-gray-500 mb-4">暂无文章发布</p>' +
-    '<p class="text-gray-400 text-sm">请在管理后台添加公众号文章</p>' +
+    '<p class="text-gray-400 text-sm">请添加公众号文章</p>' +
   '</div>' +
   '<div class="mt-4 text-center">' +
     '<a href="#home" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">' +
@@ -494,7 +450,7 @@ function showEmptyState(newsList) {
   '</div>';
 }
 
-// 页面加载完成后自动拉取新闻
+// 页面加载完成后自动加载文章
 window.addEventListener('DOMContentLoaded', loadWechatArticles);
 </script>
 
