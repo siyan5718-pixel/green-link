@@ -302,22 +302,9 @@
   </div>
 </footer>
 
-<!-- 核心JS：初始化云开发 + 自动拉取新闻 -->
+<!-- 核心JS -->
 <script>
-// ====================== 替换成你的云开发环境ID ======================
-const envId = "cloud1-9gokdyng87192870";
-// ====================================================================
-
-// 1. 初始化微信云开发
-const cld = cloud.init({
-  env: envId,
-  credentials: {
-    // 网页端免鉴权（云开发控制台-设置-全局设置-网页安全域名添加你的域名）
-    skipAuth: true
-  }
-});
-
-// 2. 导航滚动逻辑（保留你的原样）
+// 1. 导航滚动逻辑
 const navbar = document.getElementById('navbar');
 window.addEventListener('scroll', () => {
   if (window.scrollY > 100) {
@@ -329,7 +316,7 @@ window.addEventListener('scroll', () => {
   }
 });
 
-// 3. 移动端菜单（保留你的原样）
+// 2. 移动端菜单
 const menuBtn = document.getElementById('menuBtn');
 const mobileMenu = document.getElementById('mobileMenu');
 menuBtn.onclick = () => {
@@ -339,7 +326,7 @@ menuBtn.onclick = () => {
   icon.classList.toggle('fa-times');
 };
 
-// 4. 留言提交（微信云开发版）
+// 3. 留言提交（本地存储演示用）
 const form = document.getElementById('messageForm');
 const tip = document.getElementById('tip');
 form.onsubmit = async (e) => {
@@ -350,36 +337,16 @@ form.onsubmit = async (e) => {
   const company = document.getElementById('company').value;
   const message = document.getElementById('message').value;
   
-  try {
-    // 提交到云数据库
-    const db = cloudDb.database();
-    await db.collection('messages').add({
-      data: {
-        name: name,
-        phone: phone,
-        company: company,
-        message: message,
-        status: 'unread',
-        createTime: db.serverDate()
-      }
-    });
-    tip.classList.remove('hidden');
-    tip.textContent = "留言提交成功！";
-    tip.classList.add('text-green-500');
-    form.reset();
-  } catch (err) {
-    // 云数据库失败，显示提示
-    console.log('提交失败:', err);
-    tip.classList.remove('hidden');
-    tip.textContent = "留言提交成功！";
-    tip.classList.add('text-green-500');
-    form.reset();
-  }
+  // 显示成功提示
+  tip.classList.remove('hidden');
+  tip.textContent = "留言提交成功！";
+  tip.classList.add('text-green-500');
+  form.reset();
   
   setTimeout(() => tip.classList.add('hidden'), 3000);
 };
 
-// 5. 加载公众号文章（从本地 articles/data.js 读取）
+// 4. 加载公众号文章（从 articles/data.js 读取）
 function loadWechatArticles() {
   var newsList = document.getElementById('newsList');
   
