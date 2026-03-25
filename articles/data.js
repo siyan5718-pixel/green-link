@@ -12,7 +12,7 @@ const ARTICLES = [
     image: "articles/images/article-01.jpg"
   },
   {
-    title: "用AI与大数据"呵护"每一头牛：国内科学运牛新标杆项目正式启动",
+    title: "用AI与大数据'呵护'每一头牛：国内科学运牛新标杆项目正式启动",
     url: "https://mp.weixin.qq.com/s/A3XMoBVvgCKHnoMRRPc11w",
     digest: "国内首个科学运牛项目启动，运用AI与大数据技术保障活畜运输安全，树立行业新标杆。",
     date: "2025-03-12",
